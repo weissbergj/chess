@@ -1,1 +1,19 @@
 // File: background.txt
+
+1. OR destination, 0x0f, 0xff = OR destination, 1111, 11111111 = 11111111 = 0xff. sll by 24 = 0xff000000.
+2. V = IR. I = V / R = 3V / 1500 ohms = 0.002 amperes = 2 milliamperes.
+3. I could not find etc when I did find /.../CS107E -type d -name etc, so I did  wc -c Math/205A\ Lecture\ Notes.pdf = 535837
+4. Absolute path specifies from root. Relative specifies from current directory.
+5. ~ starts from root + user = home directory. . represnts current directory. .. represents parent directory. cd ~ goes to home. cd . does nothing. cd .. goes to parent directory.
+6. Absolute is /Users/jaredweissberg/Courses/cs107e_home/mycode. Can change quickly from cd $CS107E to cd .. I poked around and tried pinout.py.
+7. I will use vim. I learn by doing and fiddling around. I customized my editor with by editing ~/.vimrc and set mouse=a. I realize this isn't purist, but they didn't have MacBooks where you don't have to move your hand to a mouse when they developed Vim! It also sucks to have to leave the input to move the cursor and then re-enter input...
+8. Adding something to $PATH means you can instantly access it via unix commands preceeded by $. It is listed in the $PATH environment variable.
+9. tmux is awesome! I just learned :split and :close for horizontal split in Vim. Also, ctrl + [ is nice to quickly exit input mode instead of esc. I will probably rely on this mostly.
+10. man for manual, rm for remove, rm -r for remove recursively for directory, cd for change directory, pwd for print working director, ls for list, cat for concatenate to display content of file or multiple files like cat file1.txt file2.txt. mkdir for make directory. rmdir for remove directory. touch to create an empty file. echo to output the text/variable like echo "Hello, world" or echo $PATH.
+11. Tab autocompletes.
+12. ctrl + c quits/exits the current action.
+13. sleep 10 followed by ctrl + c ends the sleep.
+14. ctrl-r does reverse search in terminal to find part of a previous command. Up arrow uses the previous command and you can cyle.
+15. Commit is what you plan to push to the branch. Branch is the space you are developing like dev or origin. Can push your commit from dev to origin-main.
+16. Google is great.
+17. For my notes: remember i allows you to edit in vim. Ctrl-[ exits input mode. ZZ allows you to save changes and exit just like :wq does.
