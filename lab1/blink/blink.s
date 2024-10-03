@@ -10,7 +10,7 @@ loop:
     xori    a1,a1,1         # xor ^ 1 invert a1
     sw      a1,0x40(a0)     # set data value of PB0 to a1
 
-    lui     a2,0x4500       # a2 = init countdown value
+    lui     a2,0x3f00       # a2 = init countdown value
 delay:
     addi    a2,a2,-1        # decrement a2
     bne     a2,zero,delay   # keep counting down until a2 is zero
