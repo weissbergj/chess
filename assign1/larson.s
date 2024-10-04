@@ -1,6 +1,6 @@
 /* File: larson.s
  * --------------
- * ***** TODO: add your file header comment here *****
+ * ***** Constructing a Naive Larson Scanner *****
  */
 
 /*
