@@ -4,60 +4,82 @@
  */
 
 #
-## See below for the code that addressed the direction of the LEDs for the scanner with 8 LEDs :)
-#
-
-# Initialize the 0x30 register to outputs PB0 through PB7 denoted by 0x11111111
 lui a0, 0x2000
 li a1, 0x11111111
-sw a1, 0x30(a0)  
+sw a1, 0x30(a0)
 
-# Initialize several values with decimals that satisfy binaries 1, 11, ..., 11111111
-li a2, 1
-li a3, 2
-li a4, 4
-li a5, 8
-li a6, 16
-li t1, 32
-li t2, 64
-li t3, 128
+li a2, 0b00000001
+li t0, 0b10000000
+li t1, 0b00000001
 
-loop:
+
+equal:
   sw a2, 0x40(a0)
   jal ra, delay
-  sw a3, 0x40(a0)
+  sw zero, 0x40(a0)
+  slli a2, a2, 1
+  bne t0, a2, equal
+
+
+not_equal:  
+  sw a2, 0x40(a0)
   jal ra, delay
-  sw a4, 0x40(a0)
-  jal ra, delay
-  sw a5, 0x40(a0)
-  jal ra, delay
-  sw a6, 0x40(a0)
-  jal ra, delay
-  sw t1, 0x40(a0)
-  jal ra, delay
-  sw t2, 0x40(a0)
-  jal ra, delay
-  sw t3, 0x40(a0)
-  jal ra, delay
-  sw t2, 0x40(a0)
-  jal ra, delay
-  sw t1, 0x40(a0)
-  jal ra, delay
-  sw a6, 0x40(a0)
-  jal ra, delay
-  sw a5, 0x40(a0)
-  jal ra, delay
-  sw a4, 0x40(a0)
-  jal ra, delay
-  sw a3, 0x40(a0)
-  jal ra, delay
-  j loop
+  sw zero, 0x40(a0)
+  srli a2, a2, 1
+  bne a2, t1, not_equal
+
+  j equal
+
 
 delay:
-  lui t0, 0xDCC
+  lui t2, 0xDCC
 delay_loop:
-  addi t0, t0,-1
-  bne t0, zero, delay_loop
-  sw zero, 0x40(a0)
+  addi t2, t2, -1
+  bne t2, zero, delay_loop
   jalr zero, 0(ra)
+
+
+
+
+
+
+#
+#lui a0, 0x2000
+#li a1, 0x11111111
+#sw a1, 0x30(a0)
+#
+#
+#li a2, 2
+#li a3, 7
+#
+#
+#loop:
+#  sw a2, 0x40(a0)
+#  jal ra, delay_off
+#  
+#  sw a3, 0x40(a0)
+#  jal ra, delay_on
+#  
+#  j loop
+#
+#
+#delay_on:
+#  lui t0, 0x50
+#delay_loop:
+#  addi t0, t0, -1
+#  bne t0, zero, delay_loop
+#  jalr zero, 0(ra)
+#
+#delay_off:
+#  lui t0, 0x300
+#delay_loop_off:
+#  addi t0, t0, -1
+#  bne t0, zero, delay_loop_off
+#  jalr zero, 0(ra)
+#
+#
+#
+## instead of initializing all "off" values, initialize only the "on" and then do xori? does this save time if we still ## have to initialize the xori input register that switches the "on" register "off"..?
+  
+
 
