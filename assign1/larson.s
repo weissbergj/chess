@@ -9,6 +9,10 @@
  * Be sure to use GPIO pins PB0-PB3 (or PB0-PB7) for your LEDs.
  */
 
+# EXTENSION
+# PLEASE SEE larson_extension.s AND RUN make run_extension FOR THE EXTENSION.
+# EXTENSION
+
 # I went through many iterations to get to my final code.
 # 1. Final code
 # 2. Blinking four LEDs simultaneously
@@ -16,6 +20,9 @@
 # 4. Larson scanner for 8 LEDs without jumps
 # 5. Larson scanner with delay function separated
 
+
+# FINAL CODE BELOW
+# FINAL CODE BELOW
 # --------------------------------SECTION 1---------------------------------------------
 # THIS IS MY FINAL CODE.
 
@@ -59,6 +66,17 @@ delay_loop:
   addi t2, t2, -1
   bne t2, zero, delay_loop
   jalr zero, 0(ra)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
