@@ -1,13 +1,13 @@
 compiler: compiler.c
 	gcc compiler.c -o compiler
 
-script.s: compiler
-	./compiler output 3
+assembly.s: compiler input.txt
+	./compiler input.txt assembly.s
 
-script.bin: script.s
-	riscv64-unknown-elf-as script.s -o script.o
-	riscv64-unknown-elf-objcopy script.o -O binary script.bin
+assembly.bin: assembly.s
+	riscv64-unknown-elf-as assembly.s -o assembly.o
+	riscv64-unknown-elf-objcopy assembly.o -O binary assembly.bin
 
-run: script.bin
-	mango-run script.bin
+run: assembly.bin
+	mango-run assembly.bin
 

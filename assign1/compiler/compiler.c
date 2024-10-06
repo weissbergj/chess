@@ -1,98 +1,114 @@
-// This file contains the translation from C to assembly
-
+// This file translates the C in input.s into assembly file assembly.s to be assembled into binary script.binary
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h> //for isspace()
+//#include "imports.h"
 
-void pb_output(int value) {
-  unsigned int base = 0x2000;
-  unsigned int a1 = 0x00000001;
 
-  if (value >= 0 && value < 7) {
-    a1 = a1 << value;
-  } else if (value < 0) {
-    a1 = 0;
-  }
-  
-  printf("lui a0, 0x%04x\n", base);
-  printf("li a1, 0x%04x\n", a1);
-  printf("sw a1, 0x30(a0)\n"); 
-}
 
-void pb_on(int value) {
-  unsigned int base = 0x2000;
-  unsigned int a1 = 0b00000001;
-  
-  if (value >= 0 && value <= 7) {
-    a1 = 1 << value;
-  }
-  
-  printf("lui a0, 0x%04x\n", base);
-  printf("li a1, %d\n", a1);
-  printf("sw a1, 0x40(a0)\n)");
-}
+void pb_output(int value, FILE *output_file);
+void pb_on(int value, FILE *output_file);
+void custom_delay(int value, FILE *output_file);
+//void big_delay TODO
 
+char *trimwhitespace(char *str);
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <function> <value>\n", argv[0]);
-    return 1;
-    }
-
-  int value = atoi(argv[2]);
-
-  if (strcmp(argv[1], "output") == 0) {
-    pb_output(value);
-  } else if (strcmp(argv[1], "on") == 0) {
-    pb_on(value);
-  } else {
-    printf("Invalid function. Use 'output' or 'on'.\n");
+    fprintf(stderr, "Error: argc !=3\n");
     return 1;
   }
 
+  FILE *input_file =  fopen(argv[1], "r");   // 0 is compiler.c; 1 is assembly.s
+  FILE *output_file =  fopen(argv[2], "w");  // 2 is script.s
+ 
+  if (!input_file || !output_file) {
+    fprintf(stderr, "Error opening input or output file.\n");
+    return 1;
+  }
+
+  char line[256];
+  while (fgets(line, sizeof(line), input_file)) {
+    printf("%s", line);  // Print each line read for debugging
+    char *trimmed_line = trimwhitespace(line);  // Trim spaces
+
+    int value;
+    int initial_state;
+    int increment;
+    int strong;
+    int weak;
+
+    if (sscanf(trimmed_line, "pb_output(%d)", &value) == 1) {
+      pb_output(value, output_file);
+    } else if (sscanf(trimmed_line, "pb_on(%d)", &value) == 1) {
+        pb_on(value, output_file);
+    } else if (sscanf(trimmed_line, "custom_delay(%d)", &value) == 1) {
+        custom_delay(value, output_file);
+    } else {
+        printf("Unrecognized line: %s\n", trimmed_line); // debugging
+    }
+
+  }
+  
+  fclose(input_file);
+  fclose(output_file);
+ 
   return 0;
 }
 
+char *trimwhitespace(char *str) {
+  while(isspace((unsigned char)*str)) str++;
+  return str;
+}
 
+void pb_output(int value, FILE *output_file) {
+    unsigned int base = 0x2000;
+    unsigned int a1 = 0x00000001;
+    char a1_str[32];
 
+    if (value <= 0) {
+        fprintf(output_file, "lui a0, 0x%04x\n", base);
+        fprintf(output_file, "li a1, 0x0\n");
+        fprintf(output_file, "sw a1, 0x30(a0)\n");
+    } else {
+        a1 = value;
+        sprintf(a1_str, "%d", value);
+        fprintf(output_file, "lui a0, 0x%04x\n", base);
+        fprintf(output_file, "li a1, 0x%s\n", a1_str);
+        fprintf(output_file, "sw a1, 0x30(a0)\n");
+        return;
+    }
+  
+}
 
-//#
-//#What I need to do:
-//#
-//#PB_state(-8 to 0 to 0 through 7): PB0 through 7; input / output initialization
-//#  0 -->
-//#  lui a0, 0x2000
-//#  li a1, 0x0001
-//#  sw a1, 0x30(a0)
-//#
-//#  this is for a1: 0x0001, 0x0010, 0x0100, 0x1000,...,0x1000000; it is just a slli with no addi
-//#
-//#PB_input
-//#
-//#PB_output_range(0 through 7)
-//#  0 -->
-//#  lui a0, 0x2000
-//#  li a1, 0x0001
-//#  sw a1, 0x30(a0)
-//#
-//#  if 1, slli a1, a1, 1; addi a1,a1,1
-//#
-//#  this is for a1: 0x0001,0x0011,0x0111,...,0x11111111
-//#
-//#
-//#PB_input_range(0 through 7)
-//#  same as PB_output_range but loads 0's instead
-//#
-//#PB_on(0 through 7): PB0 through 7
-//#  0 -->
-//#  lui a0, 0x2000
-//#  li a1, 0b00000001
-//#  sw a1, 0x40(a0)
-//#
-//#PB_on_group(accepts1,01,000111, 11111111 or 0s, etc); similar to output_range except sets specific and only accepts values of int length as big as PB_output_range's input
-//#
-//#PB_off(0 through 7)
-//#  opposite PB
-//#
+void pb_on(int value, FILE *output_file) {
+    unsigned int base = 0x2000;
+    unsigned int a1 = 0b00000001;
+    char a1_str[32];  
+
+    if (value <= 0) {
+        a1 = 0;
+    } else {
+        a1 = value;
+    }
+  
+    pb_output(value, output_file);
+    fprintf(output_file, "lui a0, 0x%04x\n", base);
+    fprintf(output_file, "li a1, 0b%d\n", a1);
+    fprintf(output_file, "sw a1, 0x40(a0)\n");
+}
+
+int delay_counter = 0;
+
+void custom_delay(int value, FILE *output_file) {
+  fprintf(output_file, "lui t0, 0xFFFF\n");
+  fprintf(output_file, "custom_delay_%d:\n", delay_counter);
+  fprintf(output_file, "addi t0, t0, -%d\n", value);
+  fprintf(output_file, "bge t0, zero, custom_delay_%d\n", delay_counter);
+  delay_counter++;
+}
+
+//void big_delay() { TODO
 
 
