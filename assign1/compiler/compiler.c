@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
   char line[256];
   while (fgets(line, sizeof(line), input_file)) {
-    printf("%s", line);  // Print each line read for debugging
+//    printf("%s", line);  // Print each line read for debugging
     char *trimmed_line = trimwhitespace(line);  // Trim spaces
 
     int value;
