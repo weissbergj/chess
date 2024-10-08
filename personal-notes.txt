@@ -64,6 +64,8 @@ xfel ddr d1 starts mango-pi
 xfel write 0x4000000 on.bin
 xfel exec 0x4000000
 
+
+
 Lab 1
 To initialize memory controller and dump contents of 200 bytes of memory:
 xfel ddr d1
@@ -72,3 +74,6 @@ xfel hexdump 0x40000000 200
 To execute loaded program:
 xfel exec 0x40000000
 
+For layout of Mango-Pi: pinout.py in terminal
+
+Risc-V Instruction-Set: https://cs107e.github.io/guides/riscv-onepage/

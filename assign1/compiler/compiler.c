@@ -110,5 +110,8 @@ void custom_delay(int value, FILE *output_file) {
 }
 
 //void big_delay() { TODO
+//print_assembly(str ..
+//...
+//  )
 
 
