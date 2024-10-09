@@ -1,0 +1,4 @@
+int d;
+int y;
+int x = 5;
+int z = 22;
