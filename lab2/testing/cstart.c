@@ -1,8 +1,13 @@
+/* File: cstart.c
+ * --------------
+ * Provided to you pre-written. In an upcoming lecture, we
+ * will discuss what this code does and why it is necessary.
+ */
+
 // linker memmap places these symbols at start/end of bss
-extern char __bss_start__, __bss_end__;
+extern char __bss_start, __bss_end;
 
 extern void main(void);
-void _cstart(void);
 
 // The C function _cstart is called from the assembly in start.s
 // _cstart zeroes out the BSS section and then calls main.
@@ -10,11 +15,10 @@ void _cstart(void);
 // turns off after as a sign of successful completion.
 void _cstart(void)
 {
-    char *bss = &__bss_start__;
-    char *bss_end = &__bss_end__;
-
+    char *bss = &__bss_start;
+    char *bss_end = &__bss_end;
     while (bss < bss_end) {
-        *bss++ = 0;
+        *bss++ = 0; // zero out all bytes in BSS section
     }
 
     // Turn on the blue act led (GPIO PD18) before starting main

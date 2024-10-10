@@ -7,7 +7,7 @@ NAME = testing
 ARCH = -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)
 CFLAGS = $(ARCH) -g -Og -Wall -ffreestanding
-LDFLAGS = -nostdlib -T memmap
+LDFLAGS = -nostdlib -T memmap.ld
 
 all: $(NAME).bin
 
