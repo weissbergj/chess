@@ -43,10 +43,10 @@ int count_bits(unsigned int val)
     int count = 0;
 
     while (val != 0) {
-        val = val >> 1;   // BUGGY: should test/count lsb first, then shift
-        if (val & 1) {    // which inputs are affected by this bug?
-            count++;
+    	if (val & 1) {    // which inputs are affected by this bug?
+            	count++;
         }
+	val = val >> 1;
     }
     return count;
 }
@@ -57,17 +57,17 @@ void main(void) {
     assert(count_bits(0) == 0);
     assert(count_bits(8) == 1);
     assert(count_bits(6) == 2);
-    assert(count_bits(7) == 3);
+    assert(count_bits(7) == 3);  // THIS FAILS
     assert(count_bits(0xf0) == 4);
     assert(count_bits(0x107e) == 7);
-    assert(count_bits(0xffffffff) == 32);
+    assert(count_bits(0xffffffff) == 32);  // THIS FAILS
 
     // this last test case is mis-constructed
     // it will "pass" on the buggy code for `count_bits`
     // and "fail" after you correct the function
     // It is here as a reminder that your test cases
     // are only truthful if they are correctly constructed!
-    assert(count_bits(5) == 1);   // this test case is mis-constructed
+    //assert(count_bits(5) == 1);   // this test case is mis-constructed
 
 	// read cstart.c to find out what happens after main() finishes
 }
