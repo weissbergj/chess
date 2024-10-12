@@ -38,62 +38,8 @@ void gpio_init(void);
  * Returns true if `pin` refers to a valid GPIO pin id, false otherwse.
  * See enumeration `gpio_id_t` below for list of valid ids.
  */
-bool gpio_id_is_valid(gpio_id_t pin) {
-	return (pin >= GPIO_PB0 && pin <= GPIO_PB_LAST_INDEX) || 
-		(pin >= GPIO_PC0 && pin <= GPIO_PC_LAST_INDEX) ||
-		(pin >= GPIO_PD0 && pin <= GPIO_PD_LAST_INDEX) ||
-		(pin >= GPIO_PE0 && pin <= GPIO_PE_LAST_INDEX) ||
-		(pin >= GPIO_PF0 && pin <= GPIO_PF_LAST_INDEX) ||
-		(pin >= GPIO_PG0 && pin <= GPIO_PG_LAST_INDEX);
-}
+bool gpio_id_is_valid(gpio_id_t pin);
 
-/* 
- * 'function_is_valid'
- * 
- * Returns true if 'function' is in range according to enum. May need to reconsider reserved 9-13 in future.
- */
-bool function_is_valid(unsigned int function) {
-	return (function >= 0 && function <= 8 || function == 14 || function == 15);
-}
-
-/*
- * 'which_gpio_register'
- *
- * Returns the value of the CFG register as notated in the manual on page 1080/1093
- */
-unsigned int * which_gpio_register(gpio_id_t pin) {
-	unsigned int *GPIO_base_address = (unsigned int*)0x02000000;
-	unsigned int *cfg_register;
-	
-	if (pin >= GPIO_PB0 && pin <= GPIO_PB7) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0030);  // PB_CFG0
-	} else if (pin >= GPIO_PB8 && pin <= GPIO_PB_LAST_INDEX) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0034);  // PB_CFG1
-	} else if (pin >= GPIO_PC0 && pin <= GPIO_PC7) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0060);  // PC_CFG0
-	} else if (pin >= GPIO_PD0 && pin <= GPIO_PD7) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0090);  // PD_CFG0
-	} else if (pin >= GPIO_PD8 && pin <= GPIO_PD15) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0094);  // PD_CFG1
-	} else if (pin >= GPIO_PD16 && pin <= GPIO_PD_LAST_INDEX) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0098);  // PD_CFG2
-	} else if (pin >= GPIO_PE0 && pin <= GPIO_PE7) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x00C0);  // PE_CFG0
-	} else if (pin >= GPIO_PE8 && pin <= GPIO_PE_LAST_INDEX) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x00C4);  // PE_CFG1
-	} else if (pin >= GPIO_PF0 && pin <= GPIO_PF_LAST_INDEX) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x00F0);  // PF_CFG0
-	} else if (pin >= GPIO_PG0 && pin <= GPIO_PG7) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0120);  // PG_CFG0
-	} else if (pin >= GPIO_PG8 && pin <= GPIO_PG15) {
-    		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0124);  // PG_CFG1
-	} else if (pin >= GPIO_PG16 && pin <= GPIO_PG_LAST_INDEX) {
-		cfg_register = (unsigned int *)((char *)GPIO_base_address + 0x0128);  // PG_CFG2
-	} else {
-		// CONSIDER AN ERROR HERE
-	}
-	return cfg_register;
-}
 /*
  * `gpio_set_function`
  *
@@ -105,20 +51,7 @@ unsigned int * which_gpio_register(gpio_id_t pin) {
  *
  * If `pin` or `function` is not valid, does nothing.
  */
-void gpio_set_function(gpio_id_t pin, unsigned int function) {
-	if (gpio_id_is_valid(pin) && function_is_valid(function)) {
-		unsigned int *cfg_register = which_gpio_register(pin);
-
-		unsigned int pin_index = pin & 0xFF;    // Extract lower digits nn of Nnn
-		unsigned int shifter = pin_index * 4;   // Determine binary shift
-		*cfg_register &= ~(0xF << shifter);     // create a mask, negate it, and merge with register
-
-		*cfg_register |= (function << shifter); // OR the shifted function into the empty space
-	}
-	else {
-		// CONSIDER AN ERROR HERE
-	}
-}
+void gpio_set_function(gpio_id_t pin, unsigned int function);
 
 /*
  * `gpio_get_function`
@@ -130,10 +63,7 @@ void gpio_set_function(gpio_id_t pin, unsigned int function) {
  *
  * If `pin` is not valid, returns GPIO_INVALID_REQUEST.
  */
-unsigned int gpio_get_function(gpio_id_t pin) {
-	if (gpio_id_is_valid(pin)) {
-		unsigned int *cfg_register = which_gpio_register(pin);
-
+unsigned int gpio_get_function(gpio_id_t pin);
 
 /*
  * `gpio_set_input`, `gpio_set_output`

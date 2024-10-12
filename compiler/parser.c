@@ -24,3 +24,7 @@ int main() {
 	printf("Parsed '%s'\n", must_parse);
 	return 0;
 }
+
+//int random(int x) {
+//	return __builtin_popcount(5);
+//}
