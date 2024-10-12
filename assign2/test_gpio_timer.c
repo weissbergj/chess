@@ -193,6 +193,6 @@ void main(void) {
     test_gpio_reconfigure_pin();
     test_gpio_valid_ids();
     test_gpio_independent_configuration();
-    // test_timer();
-    // test_breadboard();
+    test_timer();
+    test_breadboard();
 }

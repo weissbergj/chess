@@ -7,7 +7,12 @@
 
 .globl timer_get_ticks
 timer_get_ticks:
-    /***** TODO: Your code goes here *****/
-    # Take care to use correct dest register for return value
-    # so as to interoperate with C calling conventions
+    # Read the lower 32 bits of the time CSR
+    csrr a0, time
+
+    # for 64 bits, do the following:
+    # csrr a1, timeh
+    # slli a1, a1, 32
+    # or a0, a0, a1
+
     ret

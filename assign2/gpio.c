@@ -5,9 +5,11 @@
 #include "gpio.h"
 #include <stddef.h>
 #include <stdint.h>
-// I would rather do stding.h for uint32_t than just unsinged int; if this is not allowed, as a good mental exercise imagine the values are unsigned int lol
+// I used stdint.h for uint32_t for clarity rather than int; it forces the reader (me) to understand the architecture we are working with
 
-// I originally defined the get_group_and_index, gpio_id_is_valid, and "get_cfg" functions myself in another file not knowing they existed and were "free." Then I realized I had to edit gpio.c, not gpio.h and they were already defined in this file. Learned a bit about bitwise operators and bool functions by doing that. Highly recommend making us figure out every single function in this document and header ourselves, even the enumerate. They are cool things to know.
+// I originally defined the get_group_and_index, gpio_id_is_valid, and "get_cfg" functions myself in another file not knowing they existed and were "free."
+// Then I realized I had to edit gpio.c, not gpio.h and they were already defined in this file. Learned a bit about bitwise operators and bool functions by doing that. 
+// Highly recommend making us figure out every single function in this document and header ourselves, even the enumerate. They are cool things to know.
 
 
 enum { GROUP_B = 0, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G };
