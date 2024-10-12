@@ -42,15 +42,51 @@ void test_gpio_read_write(void) {
 
     // gpio_write low, confirm gpio_read reads what was written
     gpio_write(GPIO_PB4, 0);
-    assert( gpio_read(GPIO_PB4) ==  0 );
-
-   // gpio_write high, confirm gpio_read reads what was written
+    assert( gpio_read(GPIO_PB4) ==  0);
+    
+    // gpio_write high, confirm gpio_read reads what was written
     gpio_write(GPIO_PB4, 1);
-    assert( gpio_read(GPIO_PB4) ==  1 );
+    assert(gpio_read(GPIO_PB4) == 1);
 
     // gpio_write low, confirm gpio_read reads what was written
     gpio_write(GPIO_PB4, 0);
     assert( gpio_read(GPIO_PB4) ==  0 );
+}
+
+void test_gpio_read_write_any_pin(void) {
+    gpio_id_t pins[] = {GPIO_PB1, GPIO_PC2, GPIO_PD3, GPIO_PE4, GPIO_PG4};
+    for (int i = 0; i < sizeof(pins)/sizeof(pins[0]); i++) {
+        gpio_set_output(pins[i]);
+        gpio_write(pins[i], 1);
+        assert(gpio_read(pins[i]) == 1);
+        gpio_write(pins[i], 0);
+        assert(gpio_read(pins[i]) == 0);
+    }
+}
+
+void test_gpio_independent_pins(void) {
+    gpio_set_output(GPIO_PB4);
+    gpio_set_output(GPIO_PC5);
+
+    gpio_write(GPIO_PB4, 1);
+    gpio_write(GPIO_PC5, 0);
+    assert(gpio_read(GPIO_PB4) == 1);
+    assert(gpio_read(GPIO_PC5) == 0);
+
+    gpio_write(GPIO_PB4, 0);
+    gpio_write(GPIO_PC5, 1);
+    assert(gpio_read(GPIO_PB4) == 0);
+    assert(gpio_read(GPIO_PC5) == 1);
+}
+
+void test_gpio_invalid_requests(void) {
+    unsigned int GPIO_PA4 = 999;
+    gpio_set_output(GPIO_PA4);
+    assert(gpio_get_function(GPIO_PA4) == 0); // notice how errors are handled here
+
+    // Attempt to write to invalid pin
+    gpio_write(GPIO_PA4, 1);
+    assert(gpio_read(GPIO_PA4) == GPIO_INVALID_REQUEST);
 }
 
 void test_timer(void) {
@@ -96,6 +132,50 @@ void test_breadboard(void) {
     }
 }
 
+void test_gpio_function_match(void) {
+    gpio_set_output(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_OUTPUT);
+
+    gpio_set_input(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_INPUT);
+}
+
+void test_gpio_configure_pin(void) {
+    gpio_set_output(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_OUTPUT);
+
+    gpio_set_input(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_INPUT);
+}
+
+void test_gpio_reconfigure_pin(void) {
+    gpio_set_output(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_OUTPUT);
+
+    gpio_set_input(GPIO_PC0);
+    assert(gpio_get_function(GPIO_PC0) == GPIO_FN_INPUT);
+}
+
+void test_gpio_valid_ids(void) {
+    gpio_id_t valid_pins[] = {GPIO_PB0, GPIO_PC1, GPIO_PD2, GPIO_PE3, GPIO_PF4};
+    for (int i = 0; i < sizeof(valid_pins)/sizeof(valid_pins[0]); i++) {
+        gpio_set_output(valid_pins[i]);
+        assert(gpio_get_function(valid_pins[i]) == GPIO_FN_OUTPUT);
+    }
+
+    unsigned int invalid_pin = 999;
+    gpio_set_output(invalid_pin);
+    assert(gpio_get_function(invalid_pin) == 0);
+}
+
+void test_gpio_independent_configuration(void) {
+    gpio_set_output(GPIO_PB4);
+    gpio_set_input(GPIO_PC5);
+
+    assert(gpio_get_function(GPIO_PB4) == GPIO_FN_OUTPUT);
+    assert(gpio_get_function(GPIO_PC5) == GPIO_FN_INPUT);
+}
+
 void main(void) {
     gpio_init();
     timer_init();
@@ -104,7 +184,15 @@ void main(void) {
     // the functions and are ready to test them
 
     test_gpio_set_get_function();
-    // test_gpio_read_write();
+    test_gpio_read_write();
+    test_gpio_read_write_any_pin();
+    test_gpio_independent_pins();
+    test_gpio_invalid_requests();
+    test_gpio_function_match();
+    test_gpio_configure_pin();
+    test_gpio_reconfigure_pin();
+    test_gpio_valid_ids();
+    test_gpio_independent_configuration();
     // test_timer();
     // test_breadboard();
 }
