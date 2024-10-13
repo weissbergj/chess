@@ -1,6 +1,7 @@
 /* File: timer_asm.s
  * ------------------
- * ***** TODO: add your file header comment here *****
+ * ***** This function returns the value in the CSR register 0xC01 accessed by cssr instead of sw/lw for time; 
+ see https://cs107e.github.io/readings/riscv-privileged-20190608-1.pdf#page=17 *****
  */
 
 .attribute arch, "rv64imac_zicsr"

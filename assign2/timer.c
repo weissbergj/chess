@@ -1,6 +1,6 @@
 /* File: timer.c
  * -------------
- * ***** TODO: add your file header comment here *****
+ * ***** Initialize timers in sec, ms, us for clock; also based on timer_asm.s *****
  */
 #include "timer.h"
 
