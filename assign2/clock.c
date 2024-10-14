@@ -15,20 +15,15 @@ uint8_t digit_array[10] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b011
     0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
 
 void init_gpio(void) {
-    for (int i = 0; i < 7; i++) {    // configure segments
-        gpio_set_output(segment[i]);
-    } for (int i = 0; i < 4; i++) {  // configure digits
-        gpio_set_output(digit[i]);
-    } gpio_set_input(button);        // configure button
+    for (int i = 0; i < 7; i++) gpio_set_output(segment[i]); // configure segments
+    for (int i = 0; i < 4; i++) gpio_set_output(digit[i]);   // configure digits
+    gpio_set_input(button);                                  // configure button
 }
 
 void display_digit(int num) {
-    if (num < 0 || num > 9) return;
-    uint8_t display = digit_array[num];
-    
-    for (int i = 0; i < 7; i ++) {
-        gpio_write(segment[i], (display & 1 << i));
-    }
+    if (num < 0 || num > 9) return;    
+        for (int i = 0; i < 7; i ++)
+            gpio_write(segment[i], (digit_array[num] & 1 << i));
 }
 
 void display_refresh_delay(int num, int delay) {
@@ -39,7 +34,7 @@ void display_refresh_delay(int num, int delay) {
         for (int j = 3, display_num = num; j >= 0; j--, display_num /= 10) { // loop through four displays 0-3
             gpio_write(digit[j], 1);
             display_digit(display_num % 10);
-            timer_delay_us(1000);           // short delay per display 0-3
+            timer_delay_us(1000);                              // short delay per display 0-3
             gpio_write(digit[j], 0);
         }
     }
@@ -47,7 +42,6 @@ void display_refresh_delay(int num, int delay) {
 
 void countdown(int time) {
     if (time < 0 || time > 9959 || (time % 100) >= 60) return;  // check for edge cases/null time
-
     while (time >= 0) {
         display_refresh_delay(time, 1000);
         time = (time % 100) ? time - 1 : time - 41;  // same as min-- && sec = 59 cuz (-100 + 59) = -41
