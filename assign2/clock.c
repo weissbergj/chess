@@ -48,11 +48,10 @@ void display_refresh_delay(int num, int delay) {
 void countdown(int time) {
     if (time < 0 || time > 9959 || (time % 100) >= 60) return;  // check for edge cases/null time
 
-    while (time > 0) {
+    while (time >= 0) {
         display_refresh_delay(time, 1000);
         time = (time % 100) ? time - 1 : time - 41;  // same as min-- && sec = 59 cuz (-100 + 59) = -41
     }
-    display_refresh_delay(0, 1000);
 }
 
 void main(void) {
