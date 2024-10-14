@@ -1,6 +1,6 @@
 /* File: gpio.c
  * ------------
- * ***** TODO: add your file header comment here *****
+ * ***** This file contains the declaration of the memory address structure and provides several helper functions for reading/writing to memory addresses of GPIO pins *****
  */
 #include "gpio.h"
 #include <stddef.h>
@@ -35,7 +35,7 @@ typedef struct {
 
 #define GPIO_BASE_ADDRESS 0x02000000
 
-// I accidentally wrote 0x30 * 0 to start and spent 3 hours debugging this :| lololol; gonna need uart printf real soon
+// I accidentally wrote 0x30 * 0 to start and spent 3 hours debugging this :|
 static volatile gpio_group_t *gpio_group[6] = {
 	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 1),  // GROUP_B
     	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 2),  // GROUP_C

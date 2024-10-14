@@ -1,6 +1,6 @@
 /* File: test_gpio_timer.c
  * -----------------------
- * ***** TODO: add your file header comment here *****
+ * ***** This file has several tests for the breadboard, GPIO read/write functions, and the clock. *****
  */
 #include "gpio.h"
 #include "timer.h"
