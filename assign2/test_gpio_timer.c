@@ -176,6 +176,12 @@ void test_gpio_independent_configuration(void) {
     assert(gpio_get_function(GPIO_PC5) == GPIO_FN_INPUT);
 }
 
+void test_gpio_pullup(void) {
+    gpio_set_input(GPIO_PB4);
+    gpio_activate_pullup(GPIO_PB4);
+    assert(gpio_pullup_read(GPIO_PB4) == 1);
+}
+
 void main(void) {
     gpio_init();
     timer_init();
@@ -195,4 +201,5 @@ void main(void) {
     test_gpio_independent_configuration();
     test_timer();
     test_breadboard();
+    test_gpio_pullup();
 }

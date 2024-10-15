@@ -38,11 +38,11 @@ typedef struct {
 // I accidentally wrote 0x30 * 0 to start and spent 3 hours debugging this :|
 static volatile gpio_group_t *gpio_group[6] = {
 	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 1),  // GROUP_B
-    	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 2),  // GROUP_C
-    	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 3),  // GROUP_D
-    	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 4),  // GROUP_E
-    	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 5),  // GROUP_F
-    	(volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 6)   // GROUP_G
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 2),  // GROUP_C
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 3),  // GROUP_D
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 4),  // GROUP_E
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 5),  // GROUP_F
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 6)   // GROUP_G
 };
 
 
@@ -162,7 +162,6 @@ void gpio_write(gpio_id_t pin, int value) {
 		}
 
 		*dat_register = current_value;
-
 	}
 	 // Opportunity for error here; cannot return since void; it will return 0 in get_group_and_index
 }
@@ -177,4 +176,27 @@ int gpio_read(gpio_id_t pin) {
 	return GPIO_INVALID_REQUEST; // Pin is invalid ERROR
 }
 
+// For extension:
+void gpio_activate_pullup(gpio_id_t pin) {
+    if (gpio_id_is_valid(pin)) {
+        gpio_pin_t gp = get_group_and_index(pin);
+        volatile uint32_t *pull_register = &(gpio_group[gp.group]->pull[gp.pin_index / 16]);
+        
+        unsigned int shifter = (gp.pin_index % 16) * 2;
+        *pull_register &= ~(0x3 << shifter);
+        *pull_register |= (0x1 << shifter);   // Set pin to enable pull-up (binary 01)
+    }
+}
 
+int gpio_pullup_read(gpio_id_t pin) {
+    if (gpio_id_is_valid(pin)) {
+        gpio_pin_t gp = get_group_and_index(pin); 
+        volatile unsigned int *pull_register = &(gpio_group[gp.group]->pull[gp.pin_index / 16]);
+		
+        unsigned int shifter = (gp.pin_index % 16) * 2;
+        unsigned int pull_value = (*pull_register >> shifter) & 0x3;
+        
+        return pull_value; // 00: disabled, 01: pull-up, 10: pull-down, 11: reserved
+    }
+    return GPIO_INVALID_REQUEST;
+}
