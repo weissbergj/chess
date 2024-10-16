@@ -3,6 +3,8 @@
 #include "uart.h"
 
 void main (void) {
+    volatile unsigned int *pb_config0 = (unsigned int *)0x02000030;
+
     uart_init();    // must set up uart peripheral before using, init once
 
     for (int i = 0; i < 5; i++) {
