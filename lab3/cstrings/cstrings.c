@@ -13,7 +13,12 @@ static size_t strlen(const char *str) {
 }
 
 static char *strcpy(char *dst, const char *src) {
-    // TODO: Your turn -- implement strcpy!
+    int n = 0;
+    while (src[n] != '\0') {
+        dst[n] = src[n];
+        n++;
+    }
+    dst[n] = '\0';
     return dst;
 }
 
@@ -60,7 +65,7 @@ void main(void) {
     uart_init();
 
     test_strlen();
-    //test_strcpy("CS107e rocks"); // uncomment this test after you have implemented strcpy
+    test_strcpy("CS107e rocks"); // uncomment this test after you have implemented strcpy
 
     // below are tests that make wrong-headed call to strlen
     // uncomment these one by one and run to see what the consequences

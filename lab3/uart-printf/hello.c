@@ -10,6 +10,7 @@ void main (void) {
     for (int i = 0; i < 5; i++) {
         uart_putstring("hello, laptop\n");
         timer_delay(1);
+        // printf(i);
     }
     printf("We %s printf!\n", "<3");
 }

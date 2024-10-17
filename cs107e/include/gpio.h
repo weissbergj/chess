@@ -103,6 +103,10 @@ int gpio_read(gpio_id_t pin);
  */
 void gpio_write(gpio_id_t pin, int val);
 
+
+void gpio_activate_pullup(gpio_id_t pin);
+int gpio_pullup_read(gpio_id_t pin);
+
 /*
  * Enumeration of ids for GPIO pins on the Mango Pi
  *

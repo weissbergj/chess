@@ -18,6 +18,7 @@ void init_gpio(void) {
     for (int i = 0; i < 4; i++) gpio_set_output(digit[i]);   // configure digits
     for (int i = 0; i < 3; i++) gpio_set_input(rotary[i]);   // configure rotary
     gpio_set_input(button);                                  // configure button
+
 }
 
 void display_digit(int num) {
@@ -68,6 +69,23 @@ void countdown_with_alarm(int time) {
 }
 
 void rotary_func(void) {
+
+    // Quick flash to indicate start
+    for (int i = 0; i < 4; i++) {
+        gpio_write(digit[i], 1);
+    }
+    for (int i = 0; i < 7; i++) {
+        gpio_write(segment[i], 1);
+    }
+    timer_delay_ms(500);  // Light up for 500ms
+    for (int i = 0; i < 4; i++) {
+        gpio_write(digit[i], 0);
+    }
+    for (int i = 0; i < 7; i++) {
+        gpio_write(segment[i], 0);
+    }
+    timer_delay_ms(250);  // Stay off for 250ms
+
     int count = 0;
     uint64_t last_refresh = 0;
     int prevA = gpio_read(rotary[0]);
