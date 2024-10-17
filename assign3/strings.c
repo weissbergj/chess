@@ -29,16 +29,47 @@ size_t strlen(const char *str) {
 }
 
 int strcmp(const char *s1, const char *s2) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+	int i = 0;
+	while (s1[i] == s2[i] && s1[i] != '\0' && s2[i] != '\0') {
+		i++;
+	}
+	return ((int)s1[i] - (int)s2[i]);
 }
 
 size_t strlcat(char *dst, const char *src, size_t dstsize) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+	size_t i = 0;
+	size_t dst_len = strlen(dst);
+	size_t src_len = strlen(src);
+
+	if (dst_len >= dstsize) {         //ensure room to append one char
+		return dstsize + src_len;
+	}
+
+	while (src[i] != '\0' && dst_len + src_len < dstsize - 1) {
+		dst[dst_len + i] = src[i];
+		i++;
+	}
+	dst[dst_len + i] = '\0';
+    	return dst_len + src_len;
 }
 
 unsigned long strtonum(const char *str, const char **endptr) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+	unsigned long i = 0;
+	unsigned long num = 0;
+
+	while (str[i] == ' ') {
+		i++;
+	}
+
+	while (str[i] >= '0' && str[i] <= '9') {
+		num *= 10 + str[i] - '0';
+		i++;
+	}
+
+	if (endptr != NULL) {
+		*endptr = &str[i];
+	}
+
+	return num;
+
 }
