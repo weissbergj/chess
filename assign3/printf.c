@@ -1,6 +1,6 @@
 /* File: printf.c
  * --------------
- * ***** TODO: add your file header comment here *****
+ * ***** This is the printf function in C *****
  */
 #include "printf.h"
 #include <stdarg.h>
@@ -60,25 +60,183 @@ const char *decimal_string(long val) {
 }
 
 void num_to_string(unsigned long num, int base, char *outstr) {
-    /***** TODO: Your code goes here *****/
+    int digits_in_num = 0;
+    unsigned long temp = num;
+
+    do {
+        temp /= base;
+        digits_in_num++;
+    } while (temp > 0);     // makes sure the 0-case has one digit_in_num
+
+    for (int i = digits_in_num - 1; i >= 0; i--) {
+        int modulo = num % base;
+        outstr[i] = (char)(modulo <=9 ? modulo + '0' : modulo + 'a' - 10); //if 0-9 add ASCII 0; else add 'a' - 10
+        num /= base;
+    }
+    outstr[digits_in_num] = '\0';
+}
+
+int parser(const char **str) {
+    int result = 0;
+    while (**str >= '0' && **str <= '9') {
+        result = result * 10 + (**str - '0');
+        (*str)++;
+    }
+    return result;
 }
 
 int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+    size_t i = 0, j = 0;
+    int l = 0; //these are the characters we would have written had it not stopped
+
+    void add_char(char c) {
+        if (j < bufsize - 1) {
+            buf[j++] = c;
+        }
+        l++;
+    }
+
+    void add_padding(int count, char pad_char) {
+        for (int k = 0; k < count; k++) {
+            add_char(pad_char);
+        }
+    }
+
+    while (format[i] != '\0') {
+        if (format[i] == '%' && format[i+1] != '\0') {
+            i++;
+            int field_width = 0;
+            int zero_pad = 0;
+            
+            if (format[i] == '0') {
+                zero_pad = 1;
+                i++;
+            }
+            if (format[i] >= '1' && format[i] <= '9') {
+                const char *width_start = &format[i];
+                field_width = parser(&width_start);
+                i += width_start - &format[i];
+            }
+
+            switch (format[i]) {
+                case 'c': {
+                    char c = (char)va_arg(args, int);
+                    int padding = (field_width > 1) ? field_width - 1 : 0;
+                    add_padding(padding, zero_pad ? '0' : ' ');
+                    add_char(c);
+                    break;
+                }
+                case 's': {
+                    const char *str = va_arg(args, char*);
+                    int str_len = strlen(str);
+                    int padding = (field_width > str_len) ? field_width - str_len : 0;
+                    add_padding(padding, zero_pad ? '0' : ' ');
+                    while (*str) {
+                        add_char(*str++);
+                    }
+                    break;
+                }
+                case 'd': {
+                    int d = va_arg(args, int);
+                    const char *str = decimal_string(d);
+                    int str_len = strlen(str);
+                    int padding = (field_width > str_len) ? field_width - str_len : 0;
+                    add_padding(padding, zero_pad ? '0' : ' ');
+                    while (*str) {
+                        add_char(*str++);
+                    }
+                    break;
+                }
+                case 'x': {
+                    unsigned int x = va_arg(args, unsigned int);
+                    const char *str = hex_string(x);
+                    int str_len = strlen(str);
+                    int padding = (field_width > str_len) ? field_width - str_len : 0;
+                    add_padding(padding, zero_pad ? '0' : ' ');
+                    while (*str) {
+                        add_char(*str++);
+                    }
+                    break;
+                }
+                case 'l': {
+                    i++;
+                    if (format[i] == 'd') {
+                        long ld = va_arg(args, long);
+                        const char *str = decimal_string(ld);
+                        int str_len = strlen(str);
+                        int padding = (field_width > str_len) ? field_width - str_len : 0;
+                        add_padding(padding, zero_pad ? '0' : ' ');
+                        while (*str) {
+                            add_char(*str++);
+                        }
+                    } else if (format[i] == 'x') {
+                        unsigned long lx = va_arg(args, unsigned long);
+                        const char *str = hex_string(lx);
+                        int str_len = strlen(str);
+                        int padding = (field_width > str_len) ? field_width - str_len : 0;
+                        add_padding(padding, zero_pad ? '0' : ' ');
+                        while (*str) {
+                            add_char(*str++);
+                        }
+                    }
+                    break;
+                }
+                case 'p': {
+                    void *ptr = va_arg(args, void*);
+                    unsigned long addr = (unsigned long)ptr;
+                    
+                    // ad 0x prefix
+                    add_char('0');
+                    add_char('x');
+                    
+                    // Output  address (8 hex , zero-padded)
+                    for (int k = 7; k >= 0; k--) {
+                        int addtl = (addr >> (k * 4)) & 0xF;
+                        char hex_digit = (addtl < 10) ? '0' + addtl : 'a' + (addtl - 10);
+                        add_char(hex_digit);
+                    }
+                    break;
+                }
+                case '%': {
+                    add_char('%');
+                    break;
+                }
+            }
+        } else {
+            add_char(format[i]);
+        }
+        i++;
+    }
+
+    if (bufsize > 0) {
+        buf[j < bufsize - 1 ? j : bufsize - 1] = '\0';
+    }
+    return l;
 }
 
 int snprintf(char *buf, size_t bufsize, const char *format, ...) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+    va_list args;
+    va_start(args, format);
+    int print = vsnprintf(buf, bufsize, format, args);
+    va_end(args);
+    return print;
 }
 
 // ok to assume printf output is never longer that MAX_OUTPUT_LEN
 #define MAX_OUTPUT_LEN 1024
 
 int printf(const char *format, ...) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+    char buf[MAX_OUTPUT_LEN];
+    va_list args;
+    va_start(args, format);
+    int num_characters_written = vsnprintf(buf, MAX_OUTPUT_LEN, format, args);
+    va_end(args);
+
+    
+    // uart_putstring(buf);
+    // or do we do a loop through i < MAX_OUTPUT_LEN and do uart_putchar buf[i]
+
+    return num_characters_written;
 }
 
 
@@ -110,3 +268,11 @@ void sample_use(unsigned int *addr) {
     printf("opcode is 0x%x, reg_dst is %s\n", in.opcode, reg_names[in.reg_d]);
 }
 */
+
+
+
+
+
+
+
+
