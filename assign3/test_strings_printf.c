@@ -497,6 +497,45 @@ static void test_snprintf_multi_args(void) {
     uart_putstring("All multi-argument snprintf tests passed!\n");
 }
 
+void test_printf(void) {
+    // Test basic string
+    printf("Hello, world!\n");
+
+    // Test integer formatting
+    printf("Decimal: %d, Hexadecimal: %x\n", 42, 42);
+
+    // Test character
+    printf("Character: %c\n", 'A');
+
+    // Test string
+    printf("String: %s\n", "test string");
+
+    // Test padding
+    printf("Padded integer: %05d\n", 123);
+
+    // Test long integer
+    printf("Long decimal: %ld, Long hex: %lx\n", 1234567890L, 0xABCDEF01L);
+
+    // Test pointer
+    int x = 10;
+    printf("Pointer: %p\n", (void*)&x);
+
+    // Test multiple arguments
+    printf("Multiple args: %d %s %c %x\n", 10, "hello", 'Z', 255);
+
+    // Test edge cases
+    printf("Empty string: %s\n", "");
+    printf("Zero: %d\n", 0);
+    printf("Negative: %d\n", -42);
+    printf("Percent sign: %%\n");
+
+    // Test buffer overflow (assuming MAX_OUTPUT_LEN is 1024)
+    char long_string[2000];
+    for (int i = 0; i < 1999; i++) long_string[i] = 'A';
+    long_string[1999] = '\0';
+    printf("Long string: %s\n", long_string);
+}
+
 void main(void) {
     uart_init();
     uart_putstring("Start execute main() in test_strings_printf.c\n");
@@ -508,6 +547,7 @@ void main(void) {
     test_helpers();
     test_snprintf();
     test_snprintf_multi_args();
+    test_printf();
     // test_disassemble(); // uncomment if you implement extension
 
     uart_putstring("Successfully finished executing main() in test_strings_printf.c\n");

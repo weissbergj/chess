@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include "strings.h"
+#include "uart.h"
 
 /* Prototypes for internal helpers.
  * Typically we would qualify these functions as static (private to module)
@@ -207,8 +208,7 @@ int printf(const char *format, ...) {
     int num_characters_written = vsnprintf(buf, MAX_OUTPUT_LEN, format, args);
     va_end(args);
 
-    // uart_putstring(buf);
-    // or do we do a loop through i < MAX_OUTPUT_LEN and do uart_putchar buf[i]
+    uart_putstring(buf);
 
     return num_characters_written;
 }
@@ -244,7 +244,15 @@ void sample_use(unsigned int *addr) {
 */
 
 
+// int dissasemble(int *p) {
 
+
+
+
+
+
+//     return chars_written;
+// }
 
 
 
