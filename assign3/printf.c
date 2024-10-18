@@ -77,28 +77,41 @@ void num_to_string(unsigned long num, int base, char *outstr) {
 }
 
 int parser(const char **str) {
-    int result = 0;
-    while (**str >= '0' && **str <= '9') {
-        result = result * 10 + (**str - '0');
-        (*str)++;
-    }
-    return result;
+    const char *end;
+    unsigned long result = strtonum(*str, &end);
+    *str = end;
+    return (int)result;
 }
 
 int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
     size_t i = 0, j = 0;
-    int l = 0; //these are the characters we would have written had it not stopped
+    int l = 0; // Total char would be written if unlimited buffer
+    int is_char = 0;
 
-    void add_char(char c) {
+    void add_char(char c) {                     // Adds char to buf < bufsize
         if (j < bufsize - 1) {
             buf[j++] = c;
         }
         l++;
     }
 
-    void add_padding(int count, char pad_char) {
+    void add_padding(int count, char pad_char) { // Adds padding chars to buf; either 0 or spaces
         for (int k = 0; k < count; k++) {
             add_char(pad_char);
+        }
+    }
+
+    void add_padded_string(const char *str, int field_width, int zero_pad) { // Adds string with padding, handles char
+        int str_len = is_char ? 1 : strlen(str);
+        int padding = (field_width > str_len) ? field_width - str_len : 0;
+        add_padding(padding, zero_pad ? '0' : ' ');
+        if (is_char) {
+            add_char(*str);
+        }
+        else {
+            while (*str) {
+                add_char(*str++);
+            }
         }
     }
 
@@ -112,89 +125,51 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
                 zero_pad = 1;
                 i++;
             }
-            if (format[i] >= '1' && format[i] <= '9') {
+            if (format[i] >= '1' && format[i] <= '9') {  // Parse field width
                 const char *width_start = &format[i];
                 field_width = parser(&width_start);
-                i += width_start - &format[i];
+                i += width_start - &format[i];           // Move i past the parsed digits
             }
 
             switch (format[i]) {
                 case 'c': {
+                    is_char = 1;                         // Set flag for character handling
                     char c = (char)va_arg(args, int);
-                    int padding = (field_width > 1) ? field_width - 1 : 0;
-                    add_padding(padding, zero_pad ? '0' : ' ');
-                    add_char(c);
+                    add_padded_string(&c, field_width, zero_pad);
+                    is_char = 0;                         // Reset flag
                     break;
                 }
                 case 's': {
                     const char *str = va_arg(args, char*);
-                    int str_len = strlen(str);
-                    int padding = (field_width > str_len) ? field_width - str_len : 0;
-                    add_padding(padding, zero_pad ? '0' : ' ');
-                    while (*str) {
-                        add_char(*str++);
-                    }
+                    add_padded_string(str, field_width, zero_pad);
                     break;
                 }
                 case 'd': {
                     int d = va_arg(args, int);
-                    const char *str = decimal_string(d);
-                    int str_len = strlen(str);
-                    int padding = (field_width > str_len) ? field_width - str_len : 0;
-                    add_padding(padding, zero_pad ? '0' : ' ');
-                    while (*str) {
-                        add_char(*str++);
-                    }
+                    add_padded_string(decimal_string(d), field_width, zero_pad);
                     break;
                 }
                 case 'x': {
                     unsigned int x = va_arg(args, unsigned int);
-                    const char *str = hex_string(x);
-                    int str_len = strlen(str);
-                    int padding = (field_width > str_len) ? field_width - str_len : 0;
-                    add_padding(padding, zero_pad ? '0' : ' ');
-                    while (*str) {
-                        add_char(*str++);
-                    }
+                    add_padded_string(hex_string(x), field_width, zero_pad);
                     break;
                 }
                 case 'l': {
-                    i++;
+                    i++;                                 // Move to next character ('d' or 'x')
                     if (format[i] == 'd') {
                         long ld = va_arg(args, long);
-                        const char *str = decimal_string(ld);
-                        int str_len = strlen(str);
-                        int padding = (field_width > str_len) ? field_width - str_len : 0;
-                        add_padding(padding, zero_pad ? '0' : ' ');
-                        while (*str) {
-                            add_char(*str++);
-                        }
+                        add_padded_string(decimal_string(ld), field_width, zero_pad);
                     } else if (format[i] == 'x') {
                         unsigned long lx = va_arg(args, unsigned long);
-                        const char *str = hex_string(lx);
-                        int str_len = strlen(str);
-                        int padding = (field_width > str_len) ? field_width - str_len : 0;
-                        add_padding(padding, zero_pad ? '0' : ' ');
-                        while (*str) {
-                            add_char(*str++);
-                        }
+                        add_padded_string(hex_string(lx), field_width, zero_pad);
                     }
                     break;
                 }
                 case 'p': {
                     void *ptr = va_arg(args, void*);
-                    unsigned long addr = (unsigned long)ptr;
-                    
-                    // ad 0x prefix
                     add_char('0');
                     add_char('x');
-                    
-                    // Output  address (8 hex , zero-padded)
-                    for (int k = 7; k >= 0; k--) {
-                        int addtl = (addr >> (k * 4)) & 0xF;
-                        char hex_digit = (addtl < 10) ? '0' + addtl : 'a' + (addtl - 10);
-                        add_char(hex_digit);
-                    }
+                    add_padded_string(hex_string((unsigned long)ptr), 8, 1);  // 8 digits, zero-padded
                     break;
                 }
                 case '%': {
@@ -209,9 +184,9 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
     }
 
     if (bufsize > 0) {
-        buf[j < bufsize - 1 ? j : bufsize - 1] = '\0';
+        buf[j < bufsize - 1 ? j : bufsize - 1] = '\0';   // null-termination
     }
-    return l;
+    return l;                                            // Return total characters (not necessarily written)
 }
 
 int snprintf(char *buf, size_t bufsize, const char *format, ...) {
@@ -232,7 +207,6 @@ int printf(const char *format, ...) {
     int num_characters_written = vsnprintf(buf, MAX_OUTPUT_LEN, format, args);
     va_end(args);
 
-    
     // uart_putstring(buf);
     // or do we do a loop through i < MAX_OUTPUT_LEN and do uart_putchar buf[i]
 

@@ -252,12 +252,12 @@ static void test_snprintf(void) {
     result = snprintf(truncbuf, sizeof(truncbuf), "Truncate: %s", "This is a long string");
     assert(strlen(truncbuf) == 9);  // 9 characters + null terminator
     assert(truncbuf[9] == '\0');    // Ensure null termination
-    // assert(result == 33);  // Total length if buffer was large enough
+    assert(result == 31);  // Total length if buffer was large enough
 
     // Test truncation with exact buffer size
     result = snprintf(buf, 10, "Truncate: %s", "This is a long string");
     assert(strcmp(buf, "Truncate:") == 0);
-    // assert(result == 33);  // Total length if buffer was large enough
+    assert(result == 31);  // Total length if buffer was large enough
 
     // Test %c
     result = snprintf(buf, bufsize, "Char: %c", 'A');
@@ -422,6 +422,81 @@ void test_disassemble(void) {
     }
 }
 
+static void test_snprintf_multi_args(void) {
+    char buf[200];
+    size_t bufsize = sizeof(buf);
+    int result;
+
+    // Test 1: Multiple types
+    result = snprintf(buf, bufsize, "%d %c %s %x %p", 42, 'A', "hello", 0xDEAD, (void*)0x1234);
+    assert(strcmp(buf, "42 A hello dead 0x00001234") == 0);
+    assert(result == 26);
+
+    // Test 2: Field widths
+    result = snprintf(buf, bufsize, "%5d %10s %5c", 123, "test", 'X');
+    assert(strcmp(buf, "  123       test     X") == 0);
+    assert(result == 22);
+
+    // Test 3: Zero padding
+    result = snprintf(buf, bufsize, "%05d %05x", 42, 0xAB);
+    assert(strcmp(buf, "00042 000ab") == 0);
+    assert(result == 11);
+
+    // Test 4: Long and unsigned long
+    result = snprintf(buf, bufsize, "%ld %lx", 1234567890L, 0xABCDEF01UL);
+    assert(strcmp(buf, "1234567890 abcdef01") == 0);
+    assert(result == 19);
+
+    // Test 5: Multiple pointers
+    void *ptr1 = (void*)0x1000, *ptr2 = (void*)0x2000;
+    result = snprintf(buf, bufsize, "%p %p", ptr1, ptr2);
+    assert(strcmp(buf, "0x00001000 0x00002000") == 0);
+    assert(result == 21);
+
+    // Test 6: Mixing strings and numbers
+    result = snprintf(buf, bufsize, "%s: %d, %s: %x", "Int", -123, "Hex", 456);
+    assert(strcmp(buf, "Int: -123, Hex: 1c8") == 0);
+    assert(result == 19);
+
+    // Test 7: Character arrays
+    result = snprintf(buf, bufsize, "%c%c%c%c", 'T', 'E', 'S', 'T');
+    assert(strcmp(buf, "TEST") == 0);
+    assert(result == 4);
+
+    // Test 8: Repeated format specifiers
+    result = snprintf(buf, bufsize, "%d %d %d %d %d", 1, 2, 3, 4, 5);
+    assert(strcmp(buf, "1 2 3 4 5") == 0);
+    assert(result == 9);
+
+    // Test 9: Mixed case format specifiers
+    result = snprintf(buf, bufsize, "%d %ld %x %lx", 10, 20L, 30U, 40UL);
+    assert(strcmp(buf, "10 20 1e 28") == 0);
+    assert(result == 11);
+
+    // Test 10: Truncation
+    result = snprintf(buf, 10, "This is a long string that will be truncated");
+    assert(strcmp(buf, "This is a") == 0);
+    assert(result == 44);
+
+    // Test 11: No arguments
+    result = snprintf(buf, bufsize, "No arguments here!");
+    assert(strcmp(buf, "No arguments here!") == 0);
+    assert(result == 18);
+
+    // Test 12: Escape sequences
+    result = snprintf(buf, bufsize, "Newline\nTab\tBackslash\\");
+    assert(strcmp(buf, "Newline\nTab\tBackslash\\") == 0);
+    assert(result == 22);
+
+    // Test 13: Combination of various specifiers
+    result = snprintf(buf, bufsize, "%s %d %x %c %ld %lx %p %%", 
+                      "Combined", 42, 0xFF, 'Z', 12345L, 0xABCDEFL, (void*)0x1234);
+    assert(strcmp(buf, "Combined 42 ff Z 12345 abcdef 0x00001234 %") == 0);
+    assert(result == 42);
+
+    uart_putstring("All multi-argument snprintf tests passed!\n");
+}
+
 void main(void) {
     uart_init();
     uart_putstring("Start execute main() in test_strings_printf.c\n");
@@ -432,14 +507,8 @@ void main(void) {
     test_strtonum();
     test_helpers();
     test_snprintf();
+    test_snprintf_multi_args();
     // test_disassemble(); // uncomment if you implement extension
-
-    // Many tests were added within those functions
 
     uart_putstring("Successfully finished executing main() in test_strings_printf.c\n");
 }
-
-
-
-
-
