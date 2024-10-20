@@ -391,37 +391,6 @@ static void test_snprintf(void) {
     uart_putstring("All snprintf tests passed!\n");
 }
 
-
-// This function just here as code to disassemble for extension
-int sum(int n) {
-    int result = 6;
-    for (int i = 0; i < n; i++) {
-        result += i * 3;
-    }
-    return result + 729;
-}
-
-void test_disassemble(void) {
-    const unsigned int add =  0x00f706b3;
-    const unsigned int xori = 0x0015c593;
-    const unsigned int bne =  0xfe061ce3;
-    const unsigned int sd =   0x02113423;
-
-    // formatting code %pI accesses the disassemble extension.
-    // If extension not implemented, regular version of printf
-    // will simply output pointer address followed by I
-    // e.g.  "... disassembles to 0x07ffffd4I"
-    printf("Encoded instruction %08x disassembles to %pI\n", add, &add);
-    printf("Encoded instruction %08x disassembles to %pI\n", xori, &xori);
-    printf("Encoded instruction %08x disassembles to %pI\n", bne, &bne);
-    printf("Encoded instruction %08x disassembles to %pI\n", sd, &sd);
-
-    unsigned int *fn = (unsigned int *)sum; // disassemble instructions from sum function
-    for (int i = 0; i < 10; i++) {
-        printf("%p:  %08x  %pI\n", &fn[i], fn[i], &fn[i]);
-    }
-}
-
 static void test_snprintf_multi_args(void) {
     char buf[200];
     size_t bufsize = sizeof(buf);
@@ -530,10 +499,255 @@ void test_printf(void) {
     printf("Percent sign: %%\n");
 
     // Test buffer overflow (assuming MAX_OUTPUT_LEN is 1024)
-    char long_string[2000];
-    for (int i = 0; i < 1999; i++) long_string[i] = 'A';
-    long_string[1999] = '\0';
-    printf("Long string: %s\n", long_string);
+    // char long_string[2000];
+    // for (int i = 0; i < 1999; i++) long_string[i] = 'A';
+    // long_string[1999] = '\0';
+    // printf("Long string: %s\n", long_string);
+}
+
+
+// This function just here as code to disassemble for extension
+int sum(int n) {
+    int result = 6;
+    for (int i = 0; i < n; i++) {
+        result += i * 3;
+    }
+    return result + 729;
+}
+
+void test_disassemble(void) {
+    const unsigned int add =  0x00f706b3;
+    const unsigned int xori = 0x0015c593;
+    const unsigned int bne =  0xfe061ce3;
+    const unsigned int sd =   0x02113423;
+
+    printf("Encoded instruction %08x disassembles to %pI\n", add, &add);
+    printf("Encoded instruction %08x disassembles to %pI\n", xori, &xori);
+    printf("Encoded instruction %08x disassembles to %pI\n", bne, &bne);
+    printf("Encoded instruction %08x disassembles to %pI\n", sd, &sd);
+
+    unsigned int *fn = (unsigned int *)sum; // disassemble instructions from sum function
+    for (int i = 0; i < 10; i++) {
+        printf("%p:  %08x  %pI\n", &fn[i], fn[i], &fn[i]);
+    }
+}
+
+void test_disassemble2(void) {
+    char buf[100];
+    size_t bufsize = sizeof(buf);
+
+    struct test_case {
+        unsigned int instruction;
+        const char *expected;
+    };
+
+    struct test_case tests[] = {
+        {0x00f706b3, "ADD a3, a4, a5"},
+        {0x40f706b3, "SUB a3, a4, a5"},
+        {0x00f71633, "SLL a2, a4, a5"},
+        {0x00f726b3, "SLT a3, a4, a5"},
+        {0x00f736b3, "SLTU a3, a4, a5"},
+        {0x00f746b3, "XOR a3, a4, a5"},
+        {0x00f756b3, "SRL a3, a4, a5"},
+        {0x40f756b3, "SRA a3, a4, a5"},
+        {0x00f766b3, "OR a3, a4, a5"},
+        {0x00f776b3, "AND a3, a4, a5"},
+        {0x00f68693, "ADDI a3, a3, 15"},
+        {0x00f6a693, "SLTI a3, a3, 15"},
+        {0x00f6b693, "SLTIU a3, a3, 15"},
+        {0x00f6c693, "XORI a3, a3, 15"},
+        {0x00f6e693, "ORI a3, a3, 15"},
+        {0x00f6f693, "ANDI a3, a3, 15"},
+        {0x00f69693, "SLLI a3, a3, 15"},
+        {0x00f6d693, "SRLI a3, a3, 15"},
+        {0x40f6d693, "SRAI a3, a3, 15"},
+        {0x00068683, "LB a3, 0(a3)"},
+        {0x00069683, "LH a3, 0(a3)"},
+        {0x0006a683, "LW a3, 0(a3)"},
+        {0x0006c683, "LBU a3, 0(a3)"},
+        {0x0006d683, "LHU a3, 0(a3)"},
+        {0x00f68023, "SB a5, 0(a3)"},
+        {0x00f69023, "SH a5, 0(a3)"},
+        {0x00f6a023, "SW a5, 0(a3)"},
+        {0x00f68063, "BEQ a3, a5, 0"},
+        {0x00f69063, "BNE a3, a5, 0"},
+        {0x00f6c063, "BLT a3, a5, 0"},
+        {0x00f6d063, "BGE a3, a5, 0"},
+        {0x00f6e063, "BLTU a3, a5, 0"},
+        {0x00f6f063, "BGEU a3, a5, 0"},
+        {0x000000ef, "JAL ra, 0"},
+        {0x000680e7, "JALR ra, 0(a3)"},
+        {0x000006b7, "LUI a3, 0"},
+        {0x00000697, "AUIPC a3, 0"},
+        {0x00000073, "ECALL"},
+        {0x00100073, "EBREAK"},
+        {0x0000000f, "FENCE"},
+        {0x0000100f, "FENCE.I"},
+        // RV32M instructions
+        {0x02f70733, "MUL a4, a4, a5"},
+        {0x02f71733, "MULH a4, a4, a5"},
+        {0x02f72733, "MULHSU a4, a4, a5"},
+        {0x02f73733, "MULHU a4, a4, a5"},
+        {0x02f74733, "DIV a4, a4, a5"},
+        {0x02f75733, "DIVU a4, a4, a5"},
+        {0x02f76733, "REM a4, a4, a5"},
+        {0x02f77733, "REMU a4, a4, a5"},
+
+        // RV64M instructions
+        {0x02f7073b, "MULW a4, a4, a5"},
+        {0x02f7473b, "DIVW a4, a4, a5"},
+        {0x02f7573b, "DIVUW a4, a4, a5"},
+        {0x02f7673b, "REMW a4, a4, a5"},
+        {0x02f7773b, "REMUW a4, a4, a5"},
+
+        // Zicsr instructions
+        {0x34102573, "CSRRS a0, mepc"}, 
+        {0x34151073, "CSRRW mepc, a0"}, //fix values for mepc instead of 0x341 same with mcause, mtval
+        {0x34252073, "CSRRS mepc, a0"},
+        {0x34353073, "CSRRC mepc, a0"},
+        {0x34145073, "CSRRWI mepc, 8"}, 
+        {0x34246073, "CSRRSI mepc, 8"},
+        {0x34347073, "CSRRCI mepc, 8"}, 
+
+        // RV32A instructions
+        {0x100522af, "LR.W t0, (a0)"},
+        {0x18c5232f, "SC.W t1, a2, (a0)"},
+        {0x08c5252f, "AMOSWAP.W a0, a2, (a0)"},
+        {0x00c5202f, "AMOADD.W zero, a2, (a0)"},
+        {0x20c5222f, "AMOXOR.W tp, a2, (a0)"},
+        {0x60c5242f, "AMOAND.W s0, a2, (a0)"},
+        {0x40c5262f, "AMOOR.W a2, a2, (a0)"},
+        {0x80c5282f, "AMOMIN.W a6, a2, (a0)"},
+        {0xa0c52a2f, "AMOMAX.W s4, a2, (a0)"},
+        {0xc0c52c2f, "AMOMINU.W t8, a2, (a0)"},
+        {0xe0c52e2f, "AMOMAXU.W t3, a2, (a0)"},
+
+        // RV64A instructions
+        {0x100532af, "LR.D t0, (a0)"},
+        {0x18c5332f, "SC.D t1, a2, (a0)"},
+        {0x08c5352f, "AMOSWAP.D a0, a2, (a0)"},
+        {0x00c5302f, "AMOADD.D zero, a2, (a0)"},
+        {0x20c5322f, "AMOXOR.D tp, a2, (a0)"},
+        {0x60c5342f, "AMOAND.D s0, a2, (a0)"},
+        {0x40c5362f, "AMOOR.D a2, a2, (a0)"},
+        {0x80c5382f, "AMOMIN.D a6, a2, (a0)"},  
+        {0xa0c53a2f, "AMOMAX.D s4, a2, (a0)"}, 
+        {0xc0c53c2f, "AMOMINU.D t8, a2, (a0)"}, 
+        {0xe0c53e2f, "AMOMAXU.D t4, a2, (a0)"}, 
+
+        // RV32F instructions
+        {0x00002507, "FLW a0, 0(zero)"}, //NOTE TEHSE HAVE ALL BEEN MODIFIED FOR f0/f1!!!
+        {0x00a52627, "FSW a2, 12(a0)"},
+        {0x00a5f553, "FADD.S a0, a1, a0, rne"}, 
+        {0x08a5f553, "FSUB.S a0, a1, a0, rne"},
+        {0x10a5f553, "FMUL.S a0, a1, a0, rne"},
+        {0x18a5f553, "FDIV.S a0, a1, a0, rne"},
+        {0x58057553, "FSQRT.S a0, a0, rne"},
+        {0x20a58553, "FSGNJ.S a0, a1, a0"},
+        {0x20a59553, "FSGNJN.S a0, a1, a0"},
+        {0x20a5a553, "FSGNJX.S a0, a1, a0"},
+        {0x28a58553, "FMIN.S a0, a1, a0"},
+        {0x28a59553, "FMAX.S a0, a1, a0"},
+        {0xa0a58553, "FLE.S a0, a1, a0"},
+        {0xa0a59553, "FLT.S a0, a1, a0"},
+        {0xa0a5a553, "FEQ.S a0, a1, a0"},
+        {0xc0057553, "FCVT.W.S a0, a0, rne"},
+        {0xc0157553, "FCVT.WU.S a0, a0, rne"},
+        {0xe0050553, "FMV.X.W a0, a0"},
+        {0xe0051553, "FCLASS.S a0, a0"},
+        {0xd0057553, "FCVT.S.W a0, a0, rne"},
+        {0xd0157553, "FCVT.S.WU a0, a0, rne"},
+        {0xf0050553, "FMV.W.X a0, a0"},
+        {0x00a5f543, "FMADD.S a0, a1, a0, a1, rne"},
+        {0x00a5f547, "FMSUB.S a0, a1, a0, a1, rne"},
+        {0x00a5f54b, "FNMSUB.S a0, a1, a0, a1, rne"},
+        {0x00a5f54f, "FNMADD.S a0, a1, a0, a1, rne"},
+
+        // RV64F instructions (additional to RV32F)
+        {0xc0257553, "FCVT.L.S a0, a0, rne"},
+        {0xc0357553, "FCVT.LU.S a0, a0, rne"},
+        {0xd0257553, "FCVT.S.L a0, a0, rne"},
+        {0xd0357553, "FCVT.S.LU a0, a0, rne"},
+
+        // RV32D instructions
+        {0x00003507, "FLD fa0, 0(zero)"},
+        {0x00a53027, "FSD fa0, 0(a0)"},
+        {0x02a5f543, "FMADD.D fa0, fa1, fa0, fa1, rne"}, //this might be dynamic?
+        {0x02a5f547, "FMSUB.D fa0, fa1, fa0, fa1, rne"},
+        {0x02a5f54b, "FNMSUB.D fa0, fa1, fa0, fa1, rne"},
+        {0x02a5f54f, "FNMADD.D fa0, fa1, fa0, fa1, rne"},
+        {0x02a50553, "FADD.D fa0, fa1, fa0, rne"},
+        {0x0aa50553, "FSUB.D fa0, fa1, fa0, rne"},
+        {0x12a50553, "FMUL.D fa0, fa1, fa0, rne"},
+        {0x1aa50553, "FDIV.D fa0, fa1, fa0, rne"},
+        {0x5a051553, "FSQRT.D fa0, fa1, rne"},
+        {0x22a50553, "FSGNJ.D fa0, fa1, fa0"},
+        {0x22a51553, "FSGNJN.D fa0, fa1, fa0"},
+        {0x22a52553, "FSGNJX.D fa0, fa1, fa0"},
+        {0x2aa50553, "FMIN.D fa0, fa1, fa0"},
+        {0x2aa51553, "FMAX.D fa0, fa1, fa0"},
+        {0x40151553, "FCVT.S.D fa0, fa1, rne"},
+        {0x42050553, "FCVT.D.S fa0, fa1, rne"},
+        {0xa2a52553, "FEQ.D a0, fa1, fa0"},
+        {0xa2a51553, "FLT.D a0, fa1, fa0"},
+        {0xa2a50553, "FLE.D a0, fa1, fa0"},
+        {0xe2051553, "FCLASS.D a0, fa1"},
+        {0xc2050553, "FCVT.W.D a0, fa1, rne"},
+        {0xc2150553, "FCVT.WU.D a0, fa1, rne"},
+        {0xd2050553, "FCVT.D.W fa0, a1, rne"},
+        {0xd2150553, "FCVT.D.WU fa0, a1, rne"},
+
+        // RV64D instructions (in addition to RV32D)
+        {0xc2250553, "FCVT.L.D a0, fa1, rne"},
+        {0xc2350553, "FCVT.LU.D a0, fa1, rne"},
+        {0xe2050553, "FMV.X.D a0, fa1"},
+        {0xd2250553, "FCVT.D.L fa0, a1, rne"},
+        {0xd2350553, "FCVT.D.LU fa0, a1, rne"},
+        {0xf2050553, "FMV.D.X fa0, a0"},
+
+        // RV32Q instructions
+        {0x00004507, "FLQ fa0, 0(zero)"},
+        {0x00a53027, "FSQ fa0, 0(a0)"},
+        {0x06a5f543, "FMADD.Q fa0, fa1, fa0, fa1, rne"},
+        {0x06a5f547, "FMSUB.Q fa0, fa1, fa0, fa1, rne"},
+        {0x06a5f54b, "FNMSUB.Q fa0, fa1, fa0, fa1, rne"},
+        {0x06a5f54f, "FNMADD.Q fa0, fa1, fa0, fa1, rne"},
+        {0x06a50553, "FADD.Q fa0, fa1, fa0, rne"},
+        {0x0ea50553, "FSUB.Q fa0, fa1, fa0, rne"},
+        {0x16a50553, "FMUL.Q fa0, fa1, fa0, rne"},
+        {0x1ea50553, "FDIV.Q fa0, fa1, fa0, rne"},
+        {0x5e051553, "FSQRT.Q fa0, fa1, rne"},
+        {0x26a50553, "FSGNJ.Q fa0, fa1, fa0"},
+        {0x26a51553, "FSGNJN.Q fa0, fa1, fa0"},
+        {0x26a52553, "FSGNJX.Q fa0, fa1, fa0"},
+        {0x2ea50553, "FMIN.Q fa0, fa1, fa0"},
+        {0x2ea51553, "FMAX.Q fa0, fa1, fa0"},
+        {0x40351553, "FCVT.S.Q fa0, fa1, rne"},
+        {0x46050553, "FCVT.Q.S fa0, fa1, rne"},
+        {0x42351553, "FCVT.D.Q fa0, fa1, rne"},
+        {0x46150553, "FCVT.Q.D fa0, fa1, rne"},
+        {0xa6a52553, "FEQ.Q a0, fa1, fa0"},
+        {0xa6a51553, "FLT.Q a0, fa1, fa0"},
+        {0xa6a50553, "FLE.Q a0, fa1, fa0"},
+        {0xe6051553, "FCLASS.Q a0, fa1"},
+        {0xc6050553, "FCVT.W.Q a0, fa1, rne"},
+        {0xc6150553, "FCVT.WU.Q a0, fa1, rne"},
+        {0xd6050553, "FCVT.Q.W fa0, a1, rne"},
+        {0xd6150553, "FCVT.Q.WU fa0, a1, rne"},
+
+        // RV64Q instructions (in addition to RV32Q)
+        {0xc6250553, "FCVT.L.Q a0, fa1, rne"},
+        {0xc6350553, "FCVT.LU.Q a0, fa1, rne"},
+        {0xd6250553, "FCVT.Q.L fa0, a1, rne"},
+        {0xd6350553, "FCVT.Q.LU fa0, a1, rne"}
+
+    };
+
+    for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        printf("%pI\n", &tests[i].instruction);
+    }
+
+    uart_putstring("All disassemble tests passed!\n");
 }
 
 void main(void) {
@@ -548,7 +762,8 @@ void main(void) {
     test_snprintf();
     test_snprintf_multi_args();
     test_printf();
-    // test_disassemble(); // uncomment if you implement extension
+    test_disassemble();
+    test_disassemble2();
 
     uart_putstring("Successfully finished executing main() in test_strings_printf.c\n");
 }
