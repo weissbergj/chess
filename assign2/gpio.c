@@ -143,7 +143,7 @@ unsigned int gpio_get_function(gpio_id_t pin) {
 		
 		return cfg_mask;                     // returns the decimal of the remaining binary
 	}
-	return 0; // Pin is invalid ERROR | NOTICE HOW THIS OUTPUTS 0 FOR WRITE
+	return GPIO_INVALID_REQUEST; // Pin is invalid ERROR | NOTICE HOW THIS OUTPUTS 0 FOR WRITE
 }
 
 
