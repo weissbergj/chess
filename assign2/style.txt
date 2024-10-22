@@ -1,0 +1,33 @@
+I spent a bit of time refining my style in clock.c in assignment 2. For that reason, I believe the code is as close to style recommendations as it could be. More importantly, it deviates slightly from certain style recommendations (e.g., if/else statements on one line). Knooth would certainly approve…of the code I wrote in its entirety (specifically, the clock.c file minus the initial flash post-extension). One thing that could be improved is if it were self-contained. In its current form, some previously defined operations are unused, and there are several miscellaneous files that don’t contribute to implementation. For example, gpio.c is a sensical document but arbitrary in the order of implementation, overly modular, and overly commented. I would refine my gpio.c file to include a much broader array of functionality while retaining only essential modularity. Timer.c should be combined with some general util header that also includes gpio functionality. Many separate files with so few lines of code are hard to maintain and implement in future assignments.
+
+I already wrote a struct to represent the gpio registers as the assignment required or at least strongly indicated…The code is as follows, although not properly formatted in this document. Please see gpio.c.
+
+static volatile gpio_group_t *gpio_group[6] = {
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 1),  // GROUP_B
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 2),  // GROUP_C
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 3),  // GROUP_D
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 4),  // GROUP_E
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 5),  // GROUP_F
+    (volatile gpio_group_t *)(GPIO_BASE_ADDRESS + 0x30 * 6)   // GROUP_G
+};
+
+unsigned int gpio_get_function(gpio_id_t pin) {
+	if (gpio_id_is_valid(pin)) {
+
+		gpio_pin_t gp = get_group_and_index(pin);
+		volatile unsigned int *cfg_register = &(gpio_group[gp.group]->cfg[gp.pin_index / 8]);
+
+		unsigned int shifter = (gp.pin_index % 8) * 4;
+		unsigned int cfg_mask = 0xF << shifter;
+		cfg_mask &= *cfg_register;
+		cfg_mask >>= shifter; 
+		return cfg_mask;                     
+	}
+	return GPIO_INVALID_REQUEST; // Here I previously wrote return 0 to differentiate from the gpio_pullup_read function, which returned -1, because the assignment did not specify that GPIO_INVALID_REQUEST must be returned in this spot
+}
+
+
+We could represent time in MMSS form or only seconds. We could also just check that if over 59, then we consider that in only second format, at least for the first 99 seconds. MMSS is most intuitive, though. It is also how most displays operate. You set the hours, then minutes. I represented time in MMSS form. This was incredibly straightforward to implement with modulo arithmetic. If I had done a different implementation (integer seconds), I thought I would have saved one line of code—time - (time % 100) ? time - 1 : time - 41—but upon reflection, this would not have saved any lines of code or made the implementation more efficient or straightforward.
+
+There are two global variables in the base assignment and six in the extension. The global variables are worthwhile, so they should remain. For the clock, the segment and digits remain the same and are used throughout this assignment. While one could argue that they shouldn’t remain global if we increased the dependencies for the compiler, we didn’t increase these dependencies. However, in the extension this number could be reduced, but this would impair readability. One could move the buzzer and rotary to the rotary function, though.
+
