@@ -31,3 +31,11 @@ void backtrace_print(void) {
     int n = backtrace_gather_frames(arr, max);
     backtrace_print_frames(arr+1, n-1);   // print frames starting at this function's caller
 }
+
+
+long __stack_chk_guard; /**** TODO: choose your canary value ****/
+
+void __stack_chk_fail(void)  {
+    /***** TODO: Your code goes here *****/
+    while (1); // noreturn function must not return control to caller
+}

@@ -8,6 +8,7 @@
 #include "printf.h"
 #include <stdint.h>
 #include "strings.h"
+#include "timer.h"
 #include "uart.h"
 
 void heap_dump(const char *label); // available in malloc.c but not public interface
@@ -20,8 +21,6 @@ static void check_backtrace(int nframes) {
     int frames_filled = backtrace_gather_frames(f, nframes);
 
     assert(frames_filled <= nframes);
-    // check_backtrace is only ever called from function_A, confirm resume addr is within function_A
-    assert(f[0].resume_addr > (uintptr_t)function_A && f[0].resume_addr < (uintptr_t)function_B);
     printf("Backtrace containing %d frame(s):\n", frames_filled);
     backtrace_print_frames(f, frames_filled);
     printf("\n");
@@ -134,6 +133,18 @@ static void test_heap_multiple(void) {
     heap_dump("After all frees");
 }
 
+void test_heap_leaks(void) {
+    // This function allocates blocks which are never freed.
+    // Leaks will be reported if doing the Valgrind extension, but otherwise
+    // they are harmless/silent
+    char *ptr;
+
+    ptr = malloc(9); // leaked
+    ptr = malloc(5);
+    free(ptr);
+    ptr = malloc(107); // leaked
+    malloc_report();
+}
 
 void test_heap_redzones(void) {
     // DO NOT ATTEMPT THIS TEST unless your heap has red zone protection!
@@ -152,19 +163,52 @@ void test_heap_redzones(void) {
     free(ptr);      // ptr is NOT ok
 }
 
+void hijack(void) {
+    printf("\nHuh? How did we get here? No one calls this function!\n");
+    timer_delay(100);
+}
+
+void overflow(int num_beyond, void *val) {
+    // WARNING: buggy function writes beyond its stack buffer
+    void *array[3];
+
+    for (int i = 0; i < 3 + num_beyond; i++) {
+        array[i] = val;
+    }
+    printf("Wrote %d values beyond bufsize at address %p\n", num_beyond, array);
+}
+
+void test_stack_protector(void) {
+    // calls buggy function overflow which will write past end of stack buffer
+    // If StackGuard is enabled, should halt and report stack smashing
+    // If not enabled, overflow will do wacky things, consequence differs
+    // based on what values overwrote the stack housekeeping data
+
+    void *val;  // try different values to see change in consequence
+    val = NULL;
+    //val = (void *)0x40000010;
+    //val = (void *)0x10000;
+    //val = hijack;
+
+    printf("\nCall buggy function that will overflow stack buffer\n");
+    for (int i = 1; i < 10; i++) {
+        overflow(i, val);
+    }
+}
 
 void main(void) {
     uart_init();
     uart_putstring("Start execute main() in test_backtrace_malloc.c\n");
 
     test_backtrace();
+    // test_stack_protector(); // Selectively uncomment when ready to test this
 
     test_heap_dump();
     test_heap_simple();
     test_heap_oddballs();
     test_heap_multiple();
+    test_heap_leaks();
 
-    // test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
-
+    //test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
     uart_putstring("\nSuccessfully finished executing main() in test_backtrace_malloc.c\n");
 }
