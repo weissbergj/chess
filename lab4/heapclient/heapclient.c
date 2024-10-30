@@ -11,8 +11,10 @@
  * Example: strndup("cs107e", 4) == "cs10"
  */
 static char *strndup(const char *src, size_t n) {
-    // TODO fill this in
+    char *new_str = (char *)malloc(n + 1);
+    if (new_str == NULL) {
     return NULL;
+    }
 }
 
 static bool isspace(char ch) {

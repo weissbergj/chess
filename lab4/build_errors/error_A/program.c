@@ -1,7 +1,7 @@
 #include "mango.h"
 #include "timer.h"
 
-#define DELAY 1000;
+#define DELAY 1000
 
 void main(void) {
     while (1) {

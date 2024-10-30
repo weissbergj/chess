@@ -1,5 +1,5 @@
 PROGRAM = program.bin
-MYMODULES = timer.o
+MYMODULES =  
 
 ARCH    = -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)

@@ -1,5 +1,5 @@
 PROGRAM = program.bin
-MYMODULES =
+MYMODULES = gcd.o
 
 ARCH    = -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)
