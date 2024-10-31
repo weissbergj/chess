@@ -1,6 +1,6 @@
 /* File: backtrace.c
  * -----------------
- * ***** TODO: add your file header comment here *****
+ * ***** This file includes backtrace functionality *****
  */
 #include "backtrace.h"
 #include "mango.h"
@@ -11,9 +11,21 @@
 extern unsigned long backtrace_get_fp(void);
 
 int backtrace_gather_frames(frame_t f[], int max_frames) {
-    /***** TODO: Your code goes here *****/
-    return 0;
+    unsigned long fp = backtrace_get_fp(); 
+    int i = 0;  
+
+    while (fp != 0 && i < max_frames) { 
+        if ((fp & 0x7) != 0) break; // check for proper addresses
+
+        f[i].resume_addr = *(unsigned long *)((unsigned char *)(fp) + 8);
+        i++; 
+
+        fp = *(unsigned long *)(fp); 
+    }
+
+    return i;  
 }
+
 
 void backtrace_print_frames(frame_t f[], int n) {
     char labelbuf[128];
@@ -33,9 +45,13 @@ void backtrace_print(void) {
 }
 
 
-long __stack_chk_guard; /**** TODO: choose your canary value ****/
+long __stack_chk_guard = 0xDEADCCCFCAFEDDBE; // canary value for stack_chk
 
-void __stack_chk_fail(void)  {
-    /***** TODO: Your code goes here *****/
-    while (1); // noreturn function must not return control to caller
+void __stack_chk_fail(void) {
+    frame_t frame;
+    int frames = backtrace_gather_frames(&frame, 1);
+    if (frames > 0) printf("Stack overflow at %p\n", (void *)frame.resume_addr);
+    else printf("Stack overflow (location unknown)\n");
+    mango_abort();
+    while(1);
 }

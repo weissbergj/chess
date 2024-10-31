@@ -38,8 +38,35 @@ ps2_device_t *ps2_new(gpio_id_t clock_gpio, gpio_id_t data_gpio) {
     return dev;
 }
 
+static int read_bit(ps2_device_t *dev) {
+    // Wait for clock falling edge
+    while (gpio_read(dev->clock) == 1);
+    
+    // Read data bit
+    int bit = gpio_read(dev->data);
+    
+    // Wait for clock rising edge
+    while (gpio_read(dev->clock) == 0);
+    
+    return bit;
+}
+
 // Read a single PS2 scan code.
 uint8_t ps2_read(ps2_device_t *dev) {
-    /**** TODO: your code goes here *****/
-    return 0xFF;
+    while (1) {
+        int start_bit = read_bit(dev);
+        if (start_bit == 0) break;
+    }
+    
+    uint8_t data = 0;
+    for (int i = 0; i < 8; i++) {
+        int bit = read_bit(dev);
+        data = data | (bit << i);
+    }
+    
+    // assume parity and stop bits exist
+    read_bit(dev);  // parity bit
+    read_bit(dev);  // stop bit
+    
+    return data;
 }

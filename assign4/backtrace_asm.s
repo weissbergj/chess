@@ -1,8 +1,9 @@
 /* File: backtrace_asm.s
  * ---------------------
- * ***** TODO: add your file header comment here *****
+ * ***** This file backtraces in assembly *****
  */
 
 .globl backtrace_get_fp
 backtrace_get_fp:
-    /***** TODO: Your code goes here *****/
+    ld a0, 0(fp)
+    ret
