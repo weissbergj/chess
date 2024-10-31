@@ -367,7 +367,7 @@ void main(void) {
     test_heap_multiple();
     test_heap_leaks();
 
-    // test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
+    test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
     test_coalesce();
     test_split_many();
     test_coalesce_mixed();

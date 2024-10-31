@@ -10,9 +10,7 @@
 #include "strings.h"
 
 static int count_allocs, count_frees, total_bytes_requested;
-void report_damaged_redzone(void *ptr);
 #define roundup(x,n) (((x)+((n)-1))&(~((n)-1)))
-#define REDZONE_PATTERN 0x99999999
 
 void *sbrk(size_t nbytes) {
     // __heap_start, __heap_max symbols are defined in linker script memmap.ld
@@ -29,7 +27,6 @@ void *sbrk(size_t nbytes) {
 typedef struct header {
     size_t payload_size;
     int status;          // 0 if free; 1 if in use
-    unsigned int front_redzone;
 } header;
 
 void *malloc(size_t nbytes) {
@@ -38,7 +35,7 @@ void *malloc(size_t nbytes) {
     count_allocs++;                              
     total_bytes_requested += nbytes;             
     
-    size_t rounded_size = roundup(nbytes + 8, 8); // add 8 for redzone
+    size_t rounded_size = roundup(nbytes, 8);
     size_t total_size = sizeof(header) + rounded_size;
     
     header *current_heap = (header *)&__heap_start;
@@ -54,12 +51,6 @@ void *malloc(size_t nbytes) {
                 current_heap->payload_size = rounded_size;
             }
             current_heap->status = 1;
-            current_heap->front_redzone = REDZONE_PATTERN;
-            
-            // redzone
-            unsigned int *back_redzone = (unsigned int *)((char *)(current_heap + 1) + rounded_size - 4);
-            *back_redzone = REDZONE_PATTERN;
-            
             return (void *)(current_heap + 1);
         }
         current_heap = (header *)((char *)current_heap + sizeof(header) + current_heap->payload_size);
@@ -74,12 +65,6 @@ void *malloc(size_t nbytes) {
     
     new_block->payload_size = rounded_size;
     new_block->status = 1;
-    new_block->front_redzone = REDZONE_PATTERN;
-    
-    // redzone
-    unsigned int *back_redzone = (unsigned int *)((char *)(new_block + 1) + rounded_size - 4);
-    *back_redzone = REDZONE_PATTERN;
-    
     return (void *)(new_block + 1);
 }
 
@@ -88,14 +73,6 @@ void free(void *ptr) {
 
     count_frees++;
     header *h = ((header *)ptr) - 1;
-    
-    // redzone 
-    unsigned int *back_redzone = (unsigned int *)((char *)ptr + h->payload_size - 4);
-    if (h->front_redzone != REDZONE_PATTERN || *back_redzone != REDZONE_PATTERN) {
-        report_damaged_redzone(ptr);
-        return;
-    }
-    
     h->status = 0;
     
     void *heap_end = sbrk(0);
@@ -131,7 +108,7 @@ void heap_dump(const char *label) {
                current_heap, (void *)(current_heap + 1), (int)current_heap->payload_size,
                current_heap->status ? "in use" : "free");
         
-        void *next = (void *)((char *)current_heap + sizeof(header) + current_heap->payload_size);
+        void *next = (char *)current_heap + sizeof(header) + current_heap->payload_size;
         if (next > heap_end) {
             printf("  WARNING: Block extends beyond heap end\n");
             break;
@@ -141,7 +118,8 @@ void heap_dump(const char *label) {
 
 print_stats:
     printf("----------  END DUMP (%s) ----------\n", label);
-    printf("Stats: %d in-use (%d allocs, %d frees), %d bytes requested\n\n", count_allocs - count_frees, count_allocs, count_frees, (int)total_bytes_requested);
+    printf("Stats: %d in-use (%d allocs, %d frees), %d  bytes requested\n\n",
+           count_allocs - count_frees, count_allocs, count_frees, (int)total_bytes_requested);
 }
 
 void malloc_report(void) {
@@ -165,16 +143,14 @@ void malloc_report(void) {
     }
     
     printf("\nLeak check: %d blocks leaked, %d bytes lost\n", leaks, leaked_bytes);
-    printf("Final stats: %d allocs, %d frees, %d total bytes requested\n\n", count_allocs, count_frees, (int)total_bytes_requested);
+    printf("Final stats: %d allocs, %d frees, %d total bytes requested\n\n",
+           count_allocs, count_frees, (int)total_bytes_requested);
 }
 
-void report_damaged_redzone(void *ptr) {
-    header *h = ((header *)ptr) - 1;
-    unsigned int *back_redzone = (unsigned int *)((char *)ptr + h->payload_size - 4);
-    
+void report_damaged_redzone (void *ptr) {
     printf("\n=============================================\n");
-    printf(" **********  Mini-Valgrind Alert  ********** \n");
-    printf("=============================================\n");
-    printf("Attempt to free address %p that has damaged red zone(s): [0x%08x] [0x%08x]\n", ptr, h->front_redzone, *back_redzone);
-    printf("Block of size %d bytes\n", (int)(h->payload_size - 8));
+    printf(  " **********  Mini-Valgrind Alert  ********** \n");
+    printf(  "=============================================\n");
+    printf("Attempt to free address %p that has damaged red zone(s):", ptr);
+    /***** TODO EXTENSION: Your code goes here if implementing extension *****/
 }
