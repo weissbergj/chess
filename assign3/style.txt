@@ -1,0 +1,23 @@
+1. I could have improved decomposition. Much of the time, I think of some of these functions in isolation, 
+which I should not always do. In this assignment, the extension was, at times, unreadable. At a certain point, 
+I stopped using the variables I had enumerated and just fixed and patched errors on the fly. The extension is 
+an example of poor style. One thing I was glad I caught was in the initial assignment: I defined two helper 
+functions within another function because it was hard to double-char them and typecast to make them work 
+outside. In the extension, I fixed that!
+
+2. I could have written a consolidated string parser/manipulator, as I mention in (4). I could have 
+implemented better format-specific output handling in vsnprintf, (characters like %d, %x, %s). The tradeoffs 
+here are whether or not you will be building out more complicated functions and if it is worth consolidating 
+for a few features. In our current implementation of printf, it is borderline worthwhile. I probably should 
+	have done something like this:
+
+void format_number(long value, int base, int field_width, int zero_pad, char **buf_ptr, size_t *buf_remaining, int *total_written).
+
+3. Optimizing printf is unnecessary because its main use case is debugging. The main bottlenecks come from 
+parsing and formatting strings and variadic argument handling. I/O latency is also a concern. I realize there 
+is a clear divide between optimization and making code “beautiful.” Optimization is one aspect of the art of 
+programming, but it shouldn’t always be a focus for those who don't need it. I optimize my code for myself while 
+primarily focusing on how I can make my code more refined in other ways to learn.
+
+4. num_to_string, hex_string, and decimal_string each handle different aspects of string manipulation. This 
+reduces variables to a minimal scope. We could also define a bigger string parser that handles other stuff.
