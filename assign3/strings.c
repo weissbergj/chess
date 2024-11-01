@@ -60,21 +60,40 @@ size_t strlcat(char *dst, const char *src, size_t dstsize) {
 }
 
 unsigned long strtonum(const char *str, const char **endptr) {
-	unsigned long i = 0;
-	unsigned long num = 0;
+    unsigned long num = 0;
+    size_t i = 0;
 
-	while (str[i] == ' ') {
-		i++;
-	}
+    while (str[i] == ' ') {
+        i++;
+    }
 
-	while (str[i] >= '0' && str[i] <= '9') {
-		num = num * 10 + str[i] - '0';
-		i++;
-	}
+    if (str[i] == '0' && (str[i + 1] == 'x' || str[i + 1] == 'X')) {
+        i += 2;  // Skip over "0x"
+        
+        while ((str[i] >= '0' && str[i] <= '9') ||
+               (str[i] >= 'a' && str[i] <= 'f') ||
+               (str[i] >= 'A' && str[i] <= 'F')) {
+            num = num * 16;
+            
+            if (str[i] >= '0' && str[i] <= '9') {
+                num += str[i] - '0';
+            } else if (str[i] >= 'a' && str[i] <= 'f') {
+                num += str[i] - 'a' + 10;
+            } else { 
+                num += str[i] - 'A' + 10;
+            }
+            i++;
+        }
+    } else {
+        while (str[i] >= '0' && str[i] <= '9') {
+            num = num * 10 + str[i] - '0';
+            i++;
+        }
+    }
 
-	if (endptr != NULL) {
-		*endptr = &str[i];
-	}
+    if (endptr != NULL) {
+        *endptr = &str[i];
+    }
 
-	return num;
+    return num;
 }

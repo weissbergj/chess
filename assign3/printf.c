@@ -652,8 +652,11 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
                         void *ptr = va_arg(args, void*);
                         add_char('0', &buf_ptr, &buf_remaining, &total_written);
                         add_char('x', &buf_ptr, &buf_remaining, &total_written);
-                        add_padded_string(hex_string((unsigned long)ptr), 8, 1, is_char, &buf_ptr, &buf_remaining, &total_written);  // 8 digits, zero-padded
-                    } break;
+                        const char *hex = hex_string((unsigned long)ptr);
+                        int digits = field_width ? field_width : 8;
+                        add_padded_string(hex, digits, 1, is_char, &buf_ptr, &buf_remaining, &total_written);
+                    }
+                    break;
                 }
                 case '%': {
                     add_char('%', &buf_ptr, &buf_remaining, &total_written);
@@ -672,12 +675,20 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
     return total_written;   // Return total characters (not necessarily written)
 }
 
-int snprintf(char *buf, size_t bufsize, const char *format, ...) {
+int snprintf(char *buf, size_t size, const char *format, ...) {
     va_list args;
     va_start(args, format);
-    int print = vsnprintf(buf, bufsize, format, args);
+    int would_write = vsnprintf(buf, size, format, args);
     va_end(args);
-    return print;
+    
+    // Ensure null termination
+    if (size > 0) {
+        if (would_write >= size) {
+            buf[size - 1] = '\0';
+        }
+    }
+    
+    return would_write;
 }
 
 // ok to assume printf output is never longer that MAX_OUTPUT_LEN

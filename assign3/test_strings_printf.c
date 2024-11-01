@@ -154,6 +154,60 @@ static void test_strtonum(void) {
     val = strtonum(space_input, &rest);
     assert(val == 123);
     assert(rest == space_input + 5);  // strtonum should skip whitespace
+
+    // Test hexadecimal numbers
+    const char *hex_end;
+    
+    val = strtonum("0xd", &hex_end);
+    assert(val == 13);
+    
+    val = strtonum("0x90abcdef", &hex_end);
+    assert(val == 0x90abcdef);
+    
+    val = strtonum("0xA1D", &hex_end);
+    assert(val == 0xA1D);
+    
+    val = strtonum("0x00360", &hex_end);
+    assert(val == 0x360);
+    
+    val = strtonum("0x0", &hex_end);
+    assert(val == 0);
+    
+    const char *hex_input = "0xbag";
+    val = strtonum(hex_input, &hex_end);
+    assert(val == 0xba);
+    assert(hex_end == hex_input + 4);  // Should stop at 'g'
+
+    // Test end pointer positions
+    const char *end;
+    
+    const char *test1 = "42";
+    val = strtonum(test1, &end);
+    assert(end == test1 + 2);  // Should point after "42"
+    
+    const char *test2 = "0xabc";
+    val = strtonum(test2, &end);
+    assert(end == test2 + 5);  // Should point after "0xabc"
+    
+    const char *test3 = "987abc";
+    val = strtonum(test3, &end);
+    assert(end == test3 + 3);  // Should point after "987"
+    
+    const char *test4 = "abc";
+    val = strtonum(test4, &end);
+    assert(end == test4);      // Should point to start since no valid number
+    
+    const char *test5 = "0x0fgh";
+    val = strtonum(test5, &end);
+    assert(end == test5 + 4);  // Should point after "0x0f"
+    
+    const char *test6 = "00  ";
+    val = strtonum(test6, &end);
+    assert(end == test6 + 2);  // Should point after "00"
+    
+    const char *test7 = "";
+    val = strtonum(test7, &end);
+    assert(end == test7);      // Should point to start for empty string
 }
 
 static void test_helpers(void) {
@@ -388,6 +442,59 @@ static void test_snprintf(void) {
     assert(strcmp(small_buf, "Ptr: 0x0000300") == 0);
     assert(result == 15);
 
+    // Test buffer size limiting
+    char dst[20];  // Make sure buffer is large enough for tests
+    
+    // Test truncation of large numbers
+    snprintf(dst, 5, "%d", 123456789);
+    assert(strcmp(dst, "1234") == 0);
+    
+    snprintf(dst, 5, "%d", -98765432);
+    assert(strcmp(dst, "-987") == 0);
+    
+    // Test width padding with truncation
+    snprintf(dst, 5, "%6d", 2525);
+    assert(strcmp(dst, "  25") == 0);
+    
+    snprintf(dst, 5, "%6d", -3636);
+    assert(strcmp(dst, " -36") == 0);
+    
+    // Test hex truncation
+    snprintf(dst, 5, "0x%x", 0x107d);
+    assert(strcmp(dst, "0x10") == 0);
+    
+    // Test string formatting truncation
+    snprintf(dst, 10, "My %s class is CS%d%c!", "favoritist", 107, 'e');
+    assert(strcmp(dst, "My favori") == 0);
+    
+    // Test percent sign
+    snprintf(dst, 4, "%d%% of Stanford students", 100);
+    assert(strcmp(dst, "100") == 0);
+    
+    // Test single character with minimal buffer
+    snprintf(dst, 1, "%c", 'A');
+    assert(dst[0] == '\0');  // No room for character + null terminator
+    
+    // Test zero-size buffer
+    dst[0] = 'X';  // Mark buffer to check it's not modified
+    snprintf(dst, 0, "No room at the inn");
+    assert(dst[0] == 'X');  // Buffer should not be modified
+
+        // Test zero-size buffer with overflow detection
+    char detect_buf[32];  // Larger buffer to detect overflow
+    // Fill buffer with canary values
+    for (int i = 0; i < sizeof(detect_buf); i++) {
+        detect_buf[i] = '@';
+    }
+    
+    // Try to write with size 0
+    snprintf(detect_buf, 0, "No room at the inn");
+    
+    // Verify no bytes were modified
+    for (int i = 0; i < sizeof(detect_buf); i++) {
+        assert(detect_buf[i] == '@');
+    }
+
     uart_putstring("All snprintf tests passed!\n");
 }
 
@@ -462,6 +569,54 @@ static void test_snprintf_multi_args(void) {
                       "Combined", 42, 0xFF, 'Z', 12345L, 0xABCDEFL, (void*)0x1234);
     assert(strcmp(buf, "Combined 42 ff Z 12345 abcdef 0x00001234 %") == 0);
     assert(result == 42);
+
+        // Test field width with spaces
+    result = snprintf(buf, bufsize, "Spaced: %5d", 123);
+    assert(strcmp(buf, "Spaced:   123") == 0);
+    assert(result == 13);
+
+    // Test field width with larger number
+    result = snprintf(buf, bufsize, "Large: %10d", 12345);
+    assert(strcmp(buf, "Large:      12345") == 0);
+    assert(result == 17);
+
+    // Test zero padding with larger number
+    result = snprintf(buf, bufsize, "Large Zero: %010d", 12345);
+    assert(strcmp(buf, "Large Zero: 0000012345") == 0);
+    assert(result == 22);
+
+    // Test field width with string
+    result = snprintf(buf, bufsize, "String: %10s", "test");
+    assert(strcmp(buf, "String:       test") == 0);
+    assert(result == 18);
+
+    // Test field width with character
+    result = snprintf(buf, bufsize, "Char: %5c", 'A');
+    assert(strcmp(buf, "Char:     A") == 0);
+    assert(result == 11);
+
+    // Test field width with hexadecimal
+    result = snprintf(buf, bufsize, "Hex: %8x", 0xABC);
+    assert(strcmp(buf, "Hex:      abc") == 0);
+    assert(result == 13);
+
+    // Test zero padding with hexadecimal
+    result = snprintf(buf, bufsize, "Hex Zero: %08x", 0xABC);
+    assert(strcmp(buf, "Hex Zero: 00000abc") == 0);
+    assert(result == 18);
+
+    // Test pointer formatting with different widths
+    void *ptr = (void *)0x7f94;
+    result = snprintf(buf, bufsize, "Ptr: %p", ptr);
+    assert(strcmp(buf, "Ptr: 0x00007f94") == 0);
+    assert(result == 15);
+
+    result = snprintf(buf, bufsize, "Ptr: %16p", ptr);
+    assert(strcmp(buf, "Ptr: 0x0000000000007f94") == 0);
+
+    // Test null pointer
+    result = snprintf(buf, bufsize, "Null: %p", (void *)0);
+    assert(strcmp(buf, "Null: 0x00000000") == 0);
 
     uart_putstring("All multi-argument snprintf tests passed!\n");
 }
