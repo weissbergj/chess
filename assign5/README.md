@@ -1,1 +1,1 @@
-Include information for grader about your assign5 here
+This is the keyboard and shell funcionality. The extension has ctrl a/e/u, tab complete (the bonus), history, and left/right/up/down arrow functionality.
