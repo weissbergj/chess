@@ -1,24 +1,12 @@
 /* File: ps2_assign5.c
  * -------------------
- * ***** TODO: add your file header comment here *****
+ * Implementation of PS/2 protocol for reading scancodes from PS/2 devices.
  */
 #include "gpio.h"
 #include "gpio_extra.h"
 #include "malloc.h"
 #include "ps2.h"
 
-// A ps2_device is a structure that stores all of the state and information
-// needed for a PS2 device. The clock field stores the gpio id for the
-// clock pin, and the data field stores the gpio id for the data pin.
-// Read ps2_new for example code that sets and uses these fields.
-//
-// You may extend the ps2_device structure with additional fields as needed.
-// A pointer to the current ps2_device is passed into all ps2_ calls.
-// Storing state in this structure is preferable to using global variables:
-// it allows your driver to support multiple PS2 devices accessed concurrently
-// (e.g., a keyboard and a mouse).
-//
-// This definition fills out the structure declared in ps2.h.
 struct ps2_device {
     gpio_id_t clock;
     gpio_id_t data;
@@ -38,19 +26,35 @@ ps2_device_t *ps2_new(gpio_id_t clock_gpio, gpio_id_t data_gpio) {
     dev->data = data_gpio;
     gpio_set_input(dev->data);
     gpio_set_pullup(dev->data);
+    
     return dev;
 }
 
-// Read a single PS2 scancode. Always returns a correctly received scancode:
-// if an error occurs (e.g., start bit not detected, parity is wrong), the
-// function should read another scancode.
-uint8_t ps2_read(ps2_device_t *dev) {
-    /***** TODO: Your code goes here *****/
+static int read_bit(ps2_device_t *dev) {
+    while (gpio_read(dev->clock) == 0) { }  // Wait for clock high
+    while (gpio_read(dev->clock) == 1) { }  // Wait for falling edge
+    int bit = gpio_read(dev->data);         // Read data bit
+    while (gpio_read(dev->clock) == 0) { }  // Wait for clock to return high
+    return bit;
+}
 
-    // Start with the code you wrote in lab5
-    // Writing a separate helper function read_bit() is highly
-    // recommended: this function waits for a clock falling
-    // edge then reads the data pin. (Review code from Keyboard
-    // lecture/lab)
-    return 0xFF;
+uint8_t ps2_read(ps2_device_t *dev) {
+    while (1) {
+        if (read_bit(dev) != 0) continue;  // Start bit must be 0
+
+        uint8_t data = 0;
+        int parity = 0;
+        
+        // Read 8 data bits, LSB first
+        for (int i = 0; i < 8; i++) {
+            int bit = read_bit(dev);
+            data |= (bit << i);
+            parity ^= bit;  // XOR for parity calculation
+        }
+
+        parity ^= read_bit(dev);           // Include parity bit
+        if (!parity || read_bit(dev) != 1) continue;  // Check parity and stop bit
+        
+        return data;
+    }
 }

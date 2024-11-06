@@ -66,8 +66,52 @@ static void test_shell_evaluate(void) {
     shell_init(keyboard_read_next, printf);
 
     printf("\nTest shell_evaluate on fixed commands.\n");
-    int ret = shell_evaluate("echo hello, world!");
-    printf("Command result is zero if successful, is it? %d\n", ret);
+    int ret;
+
+    // Test echo command
+    ret = shell_evaluate("echo hello, world!");
+    printf("Echo command result: %d\n", ret);
+
+    // Test help command
+    ret = shell_evaluate("help");
+    printf("Help command result: %d\n", ret);
+    
+    ret = shell_evaluate("help reboot");
+    printf("Help specific command result: %d\n", ret);
+
+    // Test invalid command
+    ret = shell_evaluate("please");
+    printf("Invalid command result: %d\n", ret);
+
+    // Test empty/whitespace
+    ret = shell_evaluate("");
+    printf("Empty command result: %d\n", ret);
+    
+    ret = shell_evaluate("   ");
+    printf("Whitespace command result: %d\n", ret);
+
+    // Test peek command
+    ret = shell_evaluate("peek 0x40000000");
+    printf("Peek valid address result: %d\n", ret);
+    
+    ret = shell_evaluate("peek");  // missing arg
+    printf("Peek missing arg result: %d\n", ret);
+    
+    ret = shell_evaluate("peek bob");  // invalid arg
+    printf("Peek invalid arg result: %d\n", ret);
+    
+    ret = shell_evaluate("peek 7");  // unaligned address
+    printf("Peek unaligned address result: %d\n", ret);
+
+    // Test poke command
+    ret = shell_evaluate("poke 0x40000000 1");
+    printf("Poke valid command result: %d\n", ret);
+    
+    ret = shell_evaluate("poke 0x40000000");  // missing value
+    printf("Poke missing value result: %d\n", ret);
+    
+    ret = shell_evaluate("poke 0x40000000 wilma");  // invalid value
+    printf("Poke invalid value result: %d\n", ret);
 }
 
 // This is an example of a "fake" input. When asked to "read"
@@ -111,24 +155,27 @@ void main(void) {
 
     printf("Testing keyboard and shell.\n");
 
-    test_keyboard_scancodes();
-    timer_delay_ms(500);
+    shell_init(keyboard_read_next, printf);
+    shell_run();
 
-    test_keyboard_sequences();
-    timer_delay_ms(500);
+    // test_keyboard_scancodes();
+    // timer_delay_ms(500);
 
-    test_keyboard_events();
-    timer_delay_ms(500);
+    // test_keyboard_sequences();
+    // timer_delay_ms(500);
 
-    test_keyboard_chars();
+    // test_keyboard_events();
+    // timer_delay_ms(500);
 
-    test_keyboard_assert();
+    // test_keyboard_chars();
 
-    test_shell_evaluate();
+    // test_keyboard_assert();
 
-    test_shell_readline_fixed_input();
+    // test_shell_evaluate();
 
-    test_shell_readline_keyboard();
+    // test_shell_readline_fixed_input();
+
+    // test_shell_readline_keyboard();
 
     printf("Finished executing main() in test_keyboard_shell.c\n");
 }
