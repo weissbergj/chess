@@ -136,16 +136,16 @@ static void test_heap_multiple(void) {
 void test_heap_leaks(void) {
     printf("\n=== STARTING LEAK TEST ===\n");
     
-    char *ptr1 = malloc(9);   // This will be leaked
-    printf("Allocated ptr1 (%d bytes)\n", 9);
+    volatile char *ptr1 = malloc(9);   // This will be leaked
+    printf("Allocated ptr1 (%d bytes) at %p\n", 9, (void*)ptr1);
     
     char *ptr2 = malloc(5);   // This will be freed
     printf("Allocated ptr2 (%d bytes)\n", 5);
     free(ptr2);
     printf("Freed ptr2\n");
     
-    char *ptr3 = malloc(107); // This will be leaked
-    printf("Allocated ptr3 (%d bytes)\n", 107);
+    volatile char *ptr3 = malloc(107); // This will be leaked
+    printf("Allocated ptr3 (%d bytes) at %p\n", 107, (void*)ptr3);
     
     printf("\nCalling malloc_report():\n");
     malloc_report();
@@ -200,6 +200,8 @@ void test_stack_protector(void) {
     for (int i = 1; i < 10; i++) {
         overflow(i, val);
     }
+    // overflow(3, val);  // Should see "Wrote 3 values beyond..."
+
 }
 
 void test_recycle(void) {
@@ -352,9 +354,80 @@ void test_recycle_varied_sizes(void) {
     printf("Successfully recycled with different sizes!\n");
 }
 
+// Add unique suffixes to avoid conflicts
+static void fun_times_test(void) {
+    printf("CS107E_AUTO: enter function fun_times()\n");
+    printf("CS107E_AUTO: exit function fun_times()\n");
+}
+
+static void bad_actor_test(void) {
+    printf("CS107E_AUTO: enter function bad_actor()\n");
+    volatile char small_buffer[10];
+    fun_times_test();
+    
+    // Use the buffer first
+    small_buffer[0] = 'A';  
+    printf("%c", small_buffer[0]);
+    
+    // Write within bounds first
+    for (int i = 0; i < 10; i++) {
+        small_buffer[i] = 'A';
+    }
+    
+    // Write way beyond bounds to ensure we hit the canary
+    for (int i = 10; i < 50; i++) {
+        small_buffer[i] = 'A';
+    }
+    
+    printf("\nCS107E_AUTO: exit function bad_actor()\n");
+}
+
+static void good_one_test(void) {
+    printf("CS107E_AUTO: enter function good_one()\n");
+    bad_actor_test();
+}
+
+static void run_stack_test(void) {  // Changed from run_test to be more specific
+    printf("CS107E_AUTO: enter function run_test()\n");
+    good_one_test();
+}
+
+static void test_stack_sequence(void) {  // Changed from test_stack_exact to be more descriptive
+    printf("\nCS107E_AUTO: START TEST\n");
+    run_stack_test();
+}
+
+static void cherry(void) {
+    frame_t f[3];
+    int frames;
+    __asm__ volatile(""); // Prevent optimization
+    frames = backtrace_gather_frames(f, 3);
+    printf("CS107E_AUTO: backtrace_gather_frames: requested up to 3 frames, received %d, expected 3\n", frames);
+    backtrace_print_frames(f, frames);
+}
+
+static void banana(void) {
+    __asm__ volatile(""); // Prevent optimization
+    cherry();
+}
+
+static void apple(void) {
+    __asm__ volatile(""); // Prevent optimization
+    banana();
+    recursion(5);
+    banana();
+}
+
+static void run_test(void) {
+    apple();
+}
+
 void main(void) {
     uart_init();
     uart_putstring("Start execute main() in test_backtrace_malloc.c\n");
+
+    // run_test(); // fixing backtrace
+    // test_stack_sequence();  // IGNORE
 
     test_backtrace();
     // test_stack_protector(); // Selectively uncomment when ready to test this
