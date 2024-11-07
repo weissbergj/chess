@@ -10,6 +10,7 @@
 // helper function implemented in file backtrace_asm.s
 extern unsigned long backtrace_get_fp(void);
 
+// Previous backtrace
 // int backtrace_gather_frames(frame_t f[], int max_frames) {
 //     unsigned long fp = backtrace_get_fp(); 
 //     int i = 0;  
