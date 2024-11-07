@@ -601,7 +601,10 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
             if (format[i] == '0') {
                 zero_pad = 1;
                 i++;
+            } else if (format[i] == ' ') {
+                i++;  // Skip space padding character
             }
+
             if (format[i] >= '1' && format[i] <= '9') {  // Parse field width
                 const char *width_start = &format[i];
                 field_width = parser(&width_start);
@@ -628,6 +631,7 @@ int vsnprintf(char *buf, size_t bufsize, const char *format, va_list args) {
                 }
                 case 'x': {
                     unsigned int x = va_arg(args, unsigned int);
+                    if (field_width > 0) zero_pad = 1;
                     add_padded_string(hex_string(x), field_width, zero_pad, is_char, &buf_ptr, &buf_remaining, &total_written);
                     break;
                 }
