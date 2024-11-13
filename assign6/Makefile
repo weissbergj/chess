@@ -29,7 +29,7 @@ PROGRAMS      = $(RUN_PROGRAM) $(TEST_PROGRAM)
 all: $(PROGRAMS)
 
 # Flags for compile and link
-ARCH    = -march=rv64imac_zicsr -mabi=lp64 # ARCH    = -march=rv64imafdc_zicsr -mabi=lp64
+ARCH    = -march=rv64imafdc_zicsr -mabi=lp64 # ARCH    = -march=rv64imac_zicsr -mabi=lp64
 CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include $$warn $$freestanding -fno-omit-frame-pointer
 ASFLAGS = $(ARCH)
 LDFLAGS = -nostdlib -L$$CS107E/lib -T memmap.ld

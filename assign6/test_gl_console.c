@@ -341,7 +341,7 @@ void test_console_special_chars(void) {
 }
 
 void main(void) {
-    // enable_fpu();  // Enable the FPU
+    enable_fpu();  // Enable the FPU
     timer_init();
     uart_init();
     printf("Executing main() in test_gl_console.c\n");
