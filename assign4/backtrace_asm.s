@@ -5,5 +5,6 @@
 
 .globl backtrace_get_fp
 backtrace_get_fp:
-    ld a0, 0(fp)
+    mv a0, fp       # Return current frame pointer
+    # ld a0, 0(fp)  # Old: Load saved (previous) frame pointer
     ret

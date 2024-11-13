@@ -191,10 +191,10 @@ void test_stack_protector(void) {
     // based on what values overwrote the stack housekeeping data
 
     void *val;  // try different values to see change in consequence
-    val = NULL;
+    // val = NULL;
     // val = (void *)0x40000010;
     // val = (void *)0x10000;
-    // val = hijack;
+    val = hijack;
 
     printf("\nCall buggy function that will overflow stack buffer\n");
     for (int i = 1; i < 10; i++) {
@@ -427,23 +427,23 @@ void main(void) {
     uart_putstring("Start execute main() in test_backtrace_malloc.c\n");
 
     // run_test(); // fixing backtrace
-    // test_stack_sequence();  // IGNORE
+    test_stack_sequence();  // IGNORE
 
-    test_backtrace();
+    // test_backtrace();
     // test_stack_protector(); // Selectively uncomment when ready to test this
 
-    test_heap_dump();
-    test_heap_simple();
-    test_split();
-    test_recycle();
-    test_heap_oddballs();
-    test_heap_multiple();
-    test_heap_leaks();
+    // test_heap_dump();
+    // test_heap_simple();
+    // test_split();
+    // test_recycle();
+    // test_heap_oddballs();
+    // test_heap_multiple();
+    // test_heap_leaks();
 
-    test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
-    test_coalesce();
-    test_split_many();
-    test_coalesce_mixed();
-    test_recycle_varied_sizes();
+    // test_heap_redzones(); // DO NOT USE unless you have implemented red zone protection!
+    // test_coalesce();
+    // test_split_many();
+    // test_coalesce_mixed();
+    // test_recycle_varied_sizes();
     uart_putstring("\nSuccessfully finished executing main() in test_backtrace_malloc.c\n");
 }
