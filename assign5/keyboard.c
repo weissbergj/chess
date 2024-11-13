@@ -7,6 +7,7 @@
 
 static ps2_device_t *dev;
 static keyboard_modifiers_t current_modifiers = 0;
+static int caps_pressed = 0;
 
 void keyboard_init(gpio_id_t clock_gpio, gpio_id_t data_gpio) {
     dev = ps2_new(clock_gpio, data_gpio);
@@ -30,8 +31,13 @@ static int is_modifier(uint8_t scan_code) {
 }
 
 static void update_modifiers(key_action_t key_event) {
-    if (key_event.keycode == 0x58 && key_event.what == KEY_PRESS) {
-        current_modifiers ^= KEYBOARD_MOD_CAPS_LOCK;
+    if (key_event.keycode == 0x58) {
+        if (key_event.what == KEY_PRESS && !caps_pressed) {
+            current_modifiers ^= KEYBOARD_MOD_CAPS_LOCK;
+            caps_pressed = 1;
+        } else if (key_event.what == KEY_RELEASE) {
+            caps_pressed = 0;
+        }
         return;
     }
     keyboard_modifiers_t flag = key_event.keycode == 0x12 || key_event.keycode == 0x59 ? 

@@ -131,11 +131,11 @@ static int poke_peek_helper(const char *arg, unsigned long *addr, const char *cm
 int cmd_peek(int argc, const char *argv[]) {
     if (argc != 2) {
         shell_state.shell_printf("error: peek expects 1 argument [addr]\n");
-        return 1;
+        return 0;
     }
 
     unsigned long addr;
-    if (poke_peek_helper(argv[1], &addr, "peek")) return 1;
+    if (poke_peek_helper(argv[1], &addr, "peek")) return 0;
 
     unsigned int val = *(unsigned int *)addr;
     shell_state.shell_printf("0x%08x:  %08x\n", (unsigned int)addr, val);
@@ -145,17 +145,17 @@ int cmd_peek(int argc, const char *argv[]) {
 int cmd_poke(int argc, const char *argv[]) {
     if (argc != 3) {
         shell_state.shell_printf("error: poke expects 2 arguments [addr] and [val]\n");
-        return 1;
+        return 0;
     }
 
     unsigned long addr;
-    if (poke_peek_helper(argv[1], &addr, "poke")) return 1;
+    if (poke_peek_helper(argv[1], &addr, "poke")) return 0;
 
     const char *endptr;
     unsigned long val = strtonum(argv[2], &endptr);
     if (*endptr != '\0') {
         shell_state.shell_printf("error: poke cannot convert '%s'\n", argv[2]);
-        return 1;
+        return 0;
     }
 
     *(unsigned int *)addr = val;
