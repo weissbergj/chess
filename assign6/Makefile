@@ -2,7 +2,7 @@
 RUN_PROGRAM   = console_shell.bin
 TEST_PROGRAM  = test_gl_console.bin
 
-MY_MODULE_SOURCES = fb.c gl.c console.c
+MY_MODULE_SOURCES = fb.c gl.c console.c fpu_enable.S
 
 # MY_MODULE_SOURCES is a list of those library modules (such as gpio.c)
 # for which you intend to use your own code. The reference implementation
@@ -29,9 +29,9 @@ PROGRAMS      = $(RUN_PROGRAM) $(TEST_PROGRAM)
 all: $(PROGRAMS)
 
 # Flags for compile and link
-ARCH    = -march=rv64im -mabi=lp64
-ASFLAGS = $(ARCH)
+ARCH    = -march=rv64imac_zicsr -mabi=lp64 # ARCH    = -march=rv64imafdc_zicsr -mabi=lp64
 CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include $$warn $$freestanding -fno-omit-frame-pointer
+ASFLAGS = $(ARCH)
 LDFLAGS = -nostdlib -L$$CS107E/lib -T memmap.ld
 LDLIBS  = -lmango -lmango_gcc
 
@@ -95,3 +95,7 @@ export warn = -Wall -Wpointer-arith -Wwrite-strings -Werror \
 export freestanding = -ffreestanding -nostdinc \
                       -isystem $(shell riscv64-unknown-elf-gcc -print-file-name=include)
 OBJDUMP_FLAGS = -d --no-show-raw-insn --no-addresses --disassembler-color=terminal --visualize-jumps
+
+# Assemble asm source to object file
+%.o: %.S
+	riscv64-unknown-elf-gcc $(ASFLAGS) -c $< -o $@
