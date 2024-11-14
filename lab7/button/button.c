@@ -10,10 +10,11 @@
 static const gpio_id_t BUTTON = GPIO_PB4;
 static int gCount = 0;
 
-void wait_for_click(void) {
-    // TODO: implement this function to
-    // wait for falling edge on button
-    // then increment gCount and uart_putstring("click")
+void handle_click(void *aux_data) {
+    gCount++;
+    rb_t *rb = (rb_t *)aux_data;
+    rb_enqueue(rb, gCount);
+    gpio_interrupt_clear(BUTTON);
 }
 
 void redraw(int nclicks) {
@@ -35,20 +36,29 @@ void redraw(int nclicks) {
 
 void config_button(void) {
     gpio_set_input(BUTTON);
-    gpio_set_pullup(BUTTON); // use internal pullup resistor
+    gpio_set_pullup(BUTTON);
+    gpio_interrupt_init();
+    gpio_interrupt_config(BUTTON, GPIO_INTERRUPT_DOUBLE_EDGE, false);
 }
 
 void main(void) {
     gpio_init();
     uart_init();
     gl_init(800, 600, GL_SINGLEBUFFER);
+    
+    interrupts_init();
+    
+    rb_t *rb = rb_new();
     config_button();
+    gpio_interrupt_register_handler(BUTTON, handle_click, rb);
+    gpio_interrupt_enable(BUTTON);
+    interrupts_global_enable();
 
-    int drawn = 0;
-    redraw(drawn);
+    redraw(0);
     while (true) {
-        wait_for_click();
-        drawn = gCount;
-        redraw(drawn);
+        int count;
+        if (rb_dequeue(rb, &count)) {
+            redraw(count);
+        }
     }
 }
