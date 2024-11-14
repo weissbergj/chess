@@ -21,16 +21,25 @@ void draw_vline(int x, color_t c) {
     }
 }
 
+void draw_rectangle(int x, int y, int width, int height, color_t c) {
+    for (int i = x; i < x + width; i++) {
+        for (int j = y; j < y + height; j++) {
+            draw_pixel(i, j, c);
+        }
+    }
+}
+
 void main(void)  {
     uart_init();
     fb_init(800, 600, FB_SINGLEBUFFER); // using fb module from libmango
 
-    for (int y = 0; y < fb_get_height(); y += 25) {
-        draw_hline(y, 0xffffffff);
-    }
+    const int square_size = 25;
 
-    for (int x = 0; x < fb_get_width(); x += 25) {
-        draw_vline(x, 0xffffffff);
+    for (int y = 0; y < fb_get_height(); y += square_size) {
+        for (int x = 0; x < fb_get_width(); x += square_size) {
+            color_t color = ((x/square_size + y/square_size) % 2 == 0) ? 0xFFFF0000 : 0xFFFFFF00; // RED / YELLOW
+            draw_rectangle(x, y, square_size, square_size, color);
+        }
     }
     printf("Hit any key to quit: ");
     uart_getchar();
