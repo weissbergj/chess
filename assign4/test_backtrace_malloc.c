@@ -427,10 +427,10 @@ void main(void) {
     uart_putstring("Start execute main() in test_backtrace_malloc.c\n");
 
     // run_test(); // fixing backtrace
-    test_stack_sequence();  // IGNORE
+    // test_stack_sequence();  // IGNORE
 
     // test_backtrace();
-    // test_stack_protector(); // Selectively uncomment when ready to test this
+    test_stack_protector(); // Selectively uncomment when ready to test this
 
     // test_heap_dump();
     // test_heap_simple();

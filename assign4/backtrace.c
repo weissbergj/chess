@@ -88,125 +88,15 @@ void backtrace_print(void) {
     backtrace_print_frames(arr+1, n-1);   // print frames starting at this function's caller
 }
 
-long __stack_chk_guard = 0xDEADCCCFCAFEDDBE; // canary value for stack_chk
-
-// Previous
-// void __stack_chk_fail(void) {
-//     void *caller_addr = __builtin_return_address(0);  // This is safe
-//     if (caller_addr) {
-//         char labelbuf[128];
-//         unsigned long addr = (unsigned long)caller_addr;
-        
-//         symtab_label_for_addr(labelbuf, sizeof(labelbuf), addr);
-        
-//         // Skip any leading < characters
-//         char *name = labelbuf;
-//         while (*name == '<') name++;
-        
-//         printf("Stack smashing detected 0x%lx at <%s\n", 
-//                addr, name);
-//     } else {
-//         printf("Stack smashing detected (location unknown)\n");
-//     }
-//     mango_abort();
-//     while(1);
-// }
-
-// This idk what happened
-// void __stack_chk_fail(void) {
-//     void *caller_addr = __builtin_return_address(0);
-//     if (caller_addr) {
-//         char labelbuf[128];
-//         unsigned long addr = (unsigned long)caller_addr;
-//         unsigned long fn_start = addr & ~0xFF;  // Round down to function start
-//         unsigned long offset = addr - fn_start;
-        
-//         symtab_label_for_addr(labelbuf, sizeof(labelbuf), fn_start);
-//         printf("Stack smashing detected 0x%lx at %s\n", 
-//                addr, labelbuf);
-//     } else {
-//         printf("Stack smashing detected (location unknown)\n");
-//     }
-//     mango_abort();
-//     while(1);
-// }
-
-// This tells us what address/start to use
-// void __stack_chk_fail(void) {
-//     void *caller_addr = __builtin_return_address(0);  // This is safe
-//     if (caller_addr) {
-//         printf("\nDebug:\n");
-//         printf("caller_addr = 0x%lx\n", (unsigned long)caller_addr);
-        
-//         // Try different addresses
-//         char label1[128], label2[128], label3[128];
-//         unsigned long addr = (unsigned long)caller_addr;
-        
-//         // 1. Raw address
-//         symtab_label_for_addr(label1, sizeof(label1), addr);
-//         printf("Raw addr: 0x%lx -> '%s'\n", addr, label1);
-        
-//         // 2. Function start
-//         unsigned long fn_start = addr & ~0xFF;
-//         symtab_label_for_addr(label2, sizeof(label2), fn_start);
-//         printf("Fn start: 0x%lx -> '%s'\n", fn_start, label2);
-        
-//         // 3. Try rounding to different boundary
-//         unsigned long fn_start2 = addr & ~0xF;
-//         symtab_label_for_addr(label3, sizeof(label3), fn_start2);
-//         printf("Fn start2: 0x%lx -> '%s'\n", fn_start2, label3);
-        
-//         printf("Stack smashing detected 0x%lx at %s\n", 
-//                addr, label1);
-//     } else {
-//         printf("Stack smashing detected (location unknown)\n");
-//     }
-//     mango_abort();
-//     while(1);
-// }
-
-// This works for first two strangely
-// void __stack_chk_fail(void) {
-//     void *caller_addr = __builtin_return_address(0);  // This is safe
-//     if (caller_addr) {
-//         char labelbuf[128];
-//         unsigned long addr = (unsigned long)caller_addr;
-        
-//         // Try different masks to find function start
-//         unsigned long fn_start1 = addr & ~0xFF;  // 256-byte boundary
-//         unsigned long fn_start2 = addr & ~0x7F;  // 128-byte boundary
-//         unsigned long fn_start3 = addr & ~0x3F;  // 64-byte boundary
-        
-//         // Get labels for each
-//         char label1[128], label2[128], label3[128];
-//         symtab_label_for_addr(label1, sizeof(label1), fn_start1);
-//         symtab_label_for_addr(label2, sizeof(label2), fn_start2);
-//         symtab_label_for_addr(label3, sizeof(label3), fn_start3);
-        
-//         printf("\nDebug:\n");
-//         printf("Raw addr: 0x%lx\n", addr);
-//         printf("256-byte: 0x%lx -> '%s'\n", fn_start1, label1);
-//         printf("128-byte: 0x%lx -> '%s'\n", fn_start2, label2);
-//         printf("64-byte:  0x%lx -> '%s'\n", fn_start3, label3);
-        
-//         // Use the first one for now
-//         printf("Stack smashing detected 0x%lx at %s\n", 
-//                addr, label1);
-//     } else {
-//         printf("Stack smashing detected (location unknown)\n");
-//     }
-//     mango_abort();
-//     while(1);
-// }
+long __stack_chk_guard = 0xDD00DDFFCAFE0000; // canary value for stack_chk added null values
 
 void __stack_chk_fail(void) {
     void *caller_addr = __builtin_return_address(0);
     if (caller_addr) {
         char labelbuf[128];
-        unsigned long addr = (unsigned long)caller_addr;
-        unsigned long fn_start = addr & ~0x7F;  // 128-byte boundary
+        unsigned long addr = (unsigned long)caller_addr - 8; // note subtracted 8
         
-        symtab_label_for_addr(labelbuf, sizeof(labelbuf), fn_start);
+        symtab_label_for_addr(labelbuf, sizeof(labelbuf), addr);
         printf("Stack smashing detected 0x%lx at %s\n", 
                addr, labelbuf);
     } else {
