@@ -10,13 +10,14 @@
 // helper function implemented in file backtrace_asm.s
 extern unsigned long backtrace_get_fp(void);
 
+// Assign retest to this previously restrictive check if (fp < 0x4ffff000 || fp >= 0x50000000) break;
 int backtrace_gather_frames(frame_t f[], int max_frames) {
     unsigned long fp = backtrace_get_fp(); 
     int i = 0;  
 
     while (fp != 0 && i < max_frames) { 
         // Stack range check for fp
-        if (fp < 0x4ffff000 || fp >= 0x50000000) break;
+        if (fp < 0x40000000 || fp >= 0x50000000) break;
 
         // Try both offsets for return address
         unsigned long resume_addr;
@@ -47,14 +48,14 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
 
         // Try fp-16
         next_fp = *(unsigned long *)((char *)fp - 16);
-        if (next_fp >= 0x4ffff000 && next_fp < 0x50000000) {
+        if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
             found_valid_fp = true;
         }
 
         // Try fp+0 if needed
         if (!found_valid_fp) {
             next_fp = *(unsigned long *)fp;
-            if (next_fp >= 0x4ffff000 && next_fp < 0x50000000) {
+            if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
                 found_valid_fp = true;
             }
         }

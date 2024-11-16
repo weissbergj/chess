@@ -398,11 +398,11 @@ static void test_stack_sequence(void) {  // Changed from test_stack_exact to be 
 }
 
 static void cherry(void) {
-    frame_t f[3];
+    frame_t f[20];  // Ask for more frames
     int frames;
     __asm__ volatile(""); // Prevent optimization
-    frames = backtrace_gather_frames(f, 3);
-    printf("CS107E_AUTO: backtrace_gather_frames: requested up to 3 frames, received %d, expected 3\n", frames);
+    frames = backtrace_gather_frames(f, 20);  // Try to get ALL frames
+    printf("CS107E_AUTO: backtrace_gather_frames: requested up to 20 frames, received %d\n", frames);
     backtrace_print_frames(f, frames);
 }
 
@@ -422,15 +422,27 @@ static void run_test(void) {
     apple();
 }
 
+// static void run_test(void) {
+//     printf("CS107E_AUTO: enter function run_test()\n");
+//     frame_t frames[20];  // Request more frames than we expect
+//     int count = backtrace_gather_frames(frames, 20);
+    
+//     printf("CS107E_AUTO: backtrace_gather_frames: requested up to 20 frames, received %d\n", count);
+//     for (int i = 0; i < count; i++) {
+//         printf("CS107E_AUTO: Frame #%d resume addr: 0x%x\n", i, frames[i].resume_addr);
+//     }
+//     printf("CS107E_AUTO: exit function run_test()\n");
+// }
+
 void main(void) {
     uart_init();
     uart_putstring("Start execute main() in test_backtrace_malloc.c\n");
 
-    // run_test(); // fixing backtrace
+    run_test(); // fixing backtrace
     // test_stack_sequence();  // IGNORE
 
     // test_backtrace();
-    test_stack_protector(); // Selectively uncomment when ready to test this
+    // test_stack_protector(); // Selectively uncomment when ready to test this
 
     // test_heap_dump();
     // test_heap_simple();
