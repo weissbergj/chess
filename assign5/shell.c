@@ -9,11 +9,19 @@
 #include "mango.h"
 #include "ps2_keys.h"
 #include "keyboard.h"
+#include "hstimer.h"
+#include "symtab.h"
+#include "malloc.h"
+#include "timer.h"
+#include "interrupts.h"
 
 static void clear_line(void);
 
 #define MAX_HISTORY_ENTRIES 10
 #define MAX_LINE_LENGTH 80
+#define TEXT_START 0x40000000    // Start of text section from memmap
+#define TEXT_END   0x40100000    // Conservative end estimate
+#define PROFILE_INTERVAL 1000    // 1ms interval
 
 typedef struct {
     char buffer[MAX_LINE_LENGTH];
@@ -36,6 +44,15 @@ static struct {
     
     // Command counter
     int cmd_num;
+
+    // Add these new fields for profiling
+    unsigned int *profile_counts;    // Array to store instruction counts
+    bool profiling;                  // Whether profiling is currently active
+    unsigned int profile_start_time; // When profiling started
+    unsigned int num_samples;        // Total samples collected
+    unsigned int debug_interrupt_count;  // Add this field
+    bool interrupt_received;
+    unsigned long last_pc;
 } shell_state;
 
 
@@ -70,6 +87,7 @@ static const command_t commands[] = {
     {"peek",   "peek [addr]",        "print contents of memory at address", cmd_peek},
     {"poke",   "poke [addr] [val]",  "store value into memory at address", cmd_poke},
     {"history", "history",            "show command history", cmd_history}
+    // {"profile", "profile [on|off]",   "control profiler operation", cmd_profile}
 };
 
 int cmd_echo(int argc, const char *argv[]) {
