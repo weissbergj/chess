@@ -60,7 +60,7 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
             }
         }
 
-        if (next_fp == 0xffffffffffffffff) break;
+        // if (next_fp == 0xffffffffffffffff) break;
 
         if (found_valid_fp) {
             fp = next_fp;
