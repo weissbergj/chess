@@ -8,9 +8,9 @@
 #include "ps2.h"
 #include "gpio_interrupt.h"
 #include "ringbuffer.h"
+#include "timer.h"
 
-static void ps2_clock_edge_handler(void *device_ptr);
-
+// First, declare the struct
 struct ps2_device {
     gpio_id_t clock_gpio;
     gpio_id_t data_gpio;
@@ -18,7 +18,16 @@ struct ps2_device {
     uint8_t scancode_in_progress;
     uint8_t bits_received;
     uint8_t parity_count;
+    bool writing;
 };
+
+// Then, declare the type alias
+typedef struct ps2_device ps2_device_t;
+
+// Now declare function prototypes
+static void ps2_clock_edge_handler(void *device_ptr);
+static void ps2_wait_clock_high(ps2_device_t *dev);
+static void ps2_wait_clock_low(ps2_device_t *dev);
 
 ps2_device_t *ps2_new(gpio_id_t clock_gpio, gpio_id_t data_gpio) {
     ps2_device_t *dev = malloc(sizeof(*dev));
@@ -71,4 +80,53 @@ uint8_t ps2_read(ps2_device_t *dev) {
     int code;
     while (!rb_dequeue(dev->scancode_buffer, &code)) { }
     return code;
+}
+
+bool ps2_write(ps2_device_t *dev, uint8_t scancode) {
+    gpio_interrupt_disable(dev->clock_gpio);
+    
+    gpio_set_output(dev->clock_gpio);
+    gpio_write(dev->clock_gpio, 0);
+    timer_delay_us(100);
+    
+    gpio_set_output(dev->data_gpio);
+    gpio_write(dev->data_gpio, 0);
+    
+    gpio_set_input(dev->clock_gpio);
+    gpio_set_pullup(dev->clock_gpio);
+    
+    uint8_t parity = 1;
+    
+    for (int i = 0; i < 8; i++) {
+        ps2_wait_clock_low(dev);
+        gpio_write(dev->data_gpio, (scancode >> i) & 1);
+        if ((scancode >> i) & 1) parity ^= 1;
+        ps2_wait_clock_high(dev);
+    }
+    
+    ps2_wait_clock_low(dev);
+    gpio_write(dev->data_gpio, parity);
+    ps2_wait_clock_high(dev);
+    
+    ps2_wait_clock_low(dev);
+    gpio_write(dev->data_gpio, 1);
+    ps2_wait_clock_high(dev);
+    
+    gpio_set_input(dev->data_gpio);
+    gpio_set_pullup(dev->data_gpio);
+    
+    ps2_wait_clock_low(dev);
+    ps2_wait_clock_high(dev);
+    
+    gpio_interrupt_enable(dev->clock_gpio);
+    
+    return true;
+}
+
+static void ps2_wait_clock_high(ps2_device_t *dev) {
+    while (!gpio_read(dev->clock_gpio)) { }
+}
+
+static void ps2_wait_clock_low(ps2_device_t *dev) {
+    while (gpio_read(dev->clock_gpio)) { }
 }
