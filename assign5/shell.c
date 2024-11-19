@@ -31,6 +31,7 @@ typedef struct {
 // Global variables for shell
 static struct {
     formatted_fn_t shell_printf;
+    input_fn_t read_input; // NEW NEW NEW NEW NEW 11/18
     
     // Command history
     history_entry_t cmd_history[MAX_HISTORY_ENTRIES];
@@ -182,6 +183,7 @@ int cmd_poke(int argc, const char *argv[]) {
 
 void shell_init(input_fn_t read_fn, formatted_fn_t print_fn) {
     shell_state.shell_printf = print_fn;
+    shell_state.read_input = read_fn;   // NEW NEW NEW NEW NEW NEW 11/18
     shell_state.cmd_num = 1;  // Start at 1
 }
 
@@ -318,26 +320,28 @@ void shell_readline(char buf[], size_t bufsize) {
     memset(shell_state.input_buffer, 0, MAX_LINE_LENGTH);
     
     while (1) {
-        key_event_t event = keyboard_read_event();
-        if (event.action.what == KEY_RELEASE) continue; // process events not releases
-        char ch = event.key.ch;
+        // key_event_t event = keyboard_read_event();
+        // if (event.action.what == KEY_RELEASE) continue; // process events not releases
+        // char ch = event.key.ch;
+        
+        char ch = shell_state.read_input();  // NEW NEW NEW NEW NEW NEW NEW 11/18 previously the three lines above
         
         // Ctrl keys
-        if (event.modifiers & KEYBOARD_MOD_CTRL) {
-            switch(ch) {
-                case 'a':  // Ctrl-A: move to start
-                    move_cursor_to(0);
-                    continue;
+        // if (event.modifiers & KEYBOARD_MOD_CTRL) {  /// THIS IS THE OLD STUFF THAT WORKS FOR CTRL KEYS
+        //     switch(ch) {
+        //         case 'a':  // Ctrl-A: move to start
+        //             move_cursor_to(0);
+        //             continue;
 
-                case 'e':  // Ctrl-E: move to end
-                    move_cursor_to(shell_state.input_length);
-                    continue;
+        //         case 'e':  // Ctrl-E: move to end
+        //             move_cursor_to(shell_state.input_length);
+        //             continue;
 
-                case 'u':  // Ctrl-U: clear line
-                    clear_line();
-                    continue;
-            }
-        }
+        //         case 'u':  // Ctrl-U: clear line
+        //             clear_line();
+        //             continue;
+        //     }
+        // }
 
         //  special keys
         switch(ch) {
