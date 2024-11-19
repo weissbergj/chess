@@ -1,0 +1,170 @@
+1. My style is consistent and follows decent programming practices: it is well-organized with clear and descriptive variable and function names.
+I am espeically proud of my efficient graphics algorithm gl_draw_line and gl_draw_triangle. The use of the DDA algorithm was espeically fun.
+The code is modular and uses plenty of helper functions like blend_colors. I could improve functions like gl_draw_pixel to exclude bounds checking 
+every call, which increases overhead. Instead, I might check in internal calls where the bounds are already validated or use an inline version of gl_draw_pixel.
+I also can reduce other patterns in my code like clipping calculations.
+
+2. In gl_clear, bounds checking is unnecessary because the function iterates over the entire framebuffer. The loop indices are 
+controlled and guaranteed to be in-bounds. To implement clipping in gl_draw_char without checking bounds, we can calculate the area beforehand. Here is an example:
+
+   void gl_draw_char(int x, int y, char ch, color_t color) {
+       int char_width = gl_get_char_width();
+       int char_height = gl_get_char_height();
+
+       // Calculate clipping boundaries
+       int x_start = MAX(0, x);
+       int y_start = MAX(0, y);
+       int x_end = MIN(gl_get_width(), x + char_width);
+       int y_end = MIN(gl_get_height(), y + char_height);
+
+       // Adjust character glyph offset
+       int dx_start = x_start - x;
+       int dy_start = y_start - y;
+
+       // Draw only within the clipped area
+       for (int dy = dy_start; dy < y_end - y; dy++) {
+           for (int dx = dx_start; dx < x_end - x; dx++) {
+               if (font_pixel_set(buffer, dx, dy)) {
+                   framebuffer_pixels[(y + dy) * gl_get_width() + (x + dx)] = color;
+               }
+           }
+       }
+   }
+
+This eliminates per-pixel bounds checks by adjusting the loop ranges based on calculated clipped area. This reduces overhead by eliminating  unnecessary checks 
+and handles characteres that are off-screen.
+
+3. For a console that displays 3 lines, each with 1 character, and using a ring buffer, we could input 'A' at position 0 and increment head to 1:
+
+Buffer: [ 'A', _, _ ]
+Head: 1
+Tail: 0
+
+Then, input 'a' at position 1, increment to head 2, put 'b' at position 2, increment to head 0 (wrap around), to get 
+
+Buffer: [ 'A', 'a', 'b' ]
+Head: 0
+Tail: 1
+
+Then, place 'B' at position 0, increment head to 1, increment tail to 2:
+
+Buffer: [ 'B', 'a', 'b' ]
+Head: 1
+Tail: 2
+
+Then, place 'C' at position 1, increment head to 2, increment tail to 0. Place 'D' at position 2, increment head to 0, increment tail to 1. Place 'E' at position 0, 
+increment head to 1, increment tail to 2. Place 'F' at position 1, increment head to 2, increment tail to 0:
+
+Buffer: [ 'E', 'F', 'D' ]
+Head: 2
+Tail: 0
+
+Hopefully these ASCII diagrams are more helpful:
+
+Initial State:
+                 head
+                  ↓
++---+---+---+    Buffer Contents
+| _ | _ | _ |    Direction: →
++---+---+---+    Display: (empty)
+  0   1   2
+     ↑
+    tail
+
+After 'A':
+                  head
+                   ↓
++---+---+---+    Buffer Contents
+| A | _ | _ |    Display: "A"
++---+---+---+
+  0   1   2
+  ↑
+ tail
+
+After "ab":
+      head
+       ↓
++---+---+---+    Buffer Contents
+| A | a | b |    Display: "a b"
++---+---+---+
+  0   1   2
+     ↑
+    tail
+
+After "B":
+           head
+            ↓
++---+---+---+    Buffer Contents
+| B | a | b |    Display: "B a b"
++---+---+---+
+  0   1   2
+           ↑
+          tail
+
+After "CDEF" (step by step):
+
+1. After 'C':
++---+---+---+    Display: "a b C"
+| B | C | b |
++---+---+---+
+
+2. After 'D':
++---+---+---+    Display: "b C D"
+| B | C | D |
++---+---+---+
+
+3. After 'E':
++---+---+---+    Display: "C D E"
+| E | C | D |
++---+---+---+
+
+4. Final state after 'F':
+           head
+            ↓
++---+---+---+    Buffer Contents
+| E | F | D |    Display: "D E F"
++---+---+---+
+  0   1   2
+  ↑
+ tail
+
+4. To optimize gl_clear, we could use a memset32 function to set 32-bit memory bit chucks:
+
+   void memset32(uint32_t* dest, uint32_t value, size_t count) {
+       for (size_t i = 0; i < count; i++) {
+           dest[i] = value;
+       }
+   }
+
+We could also incldue loop unrolling:
+
+   void gl_clear(color_t color) {
+       int total_pixels = gl_get_width() * gl_get_height();
+       int i = 0;
+       for (; i <= total_pixels - 4; i += 4) {
+           framebuffer_pixels[i] = color;
+           framebuffer_pixels[i + 1] = color;
+           framebuffer_pixels[i + 2] = color;
+           framebuffer_pixels[i + 3] = color;
+       }
+       // Handle remaining pixels
+       for (; i < total_pixels; i++) {
+           framebuffer_pixels[i] = color;
+       }
+   }
+
+Also, gl_clear should be inline to suggest inlining to the compiler:
+
+   inline void gl_clear(color_t color) {
+       // rest of function
+   }
+
+To measure the increase in performance, we could use timer_get_ticks() and benchmark on different screen sizes. We could also use profiling tools to analyze 
+CPU usage.
+
+Additional notes on my style:
+
+I should have included MORE COMMENTS. I also should have been more consistent in spacing, indentation, and naming. Furthermore, error handling could have been more 
+robust.
+
+
