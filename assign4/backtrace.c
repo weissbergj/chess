@@ -25,14 +25,14 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
 
         // Try fp-8
         resume_addr = *(unsigned long *)((char *)fp - 8);
-        if (resume_addr >= 0x40000000 && resume_addr <= 0x40020000) {
+        if (resume_addr > 0) {
             found_valid_addr = true;
         }
 
         // Try fp+8 if needed
         if (!found_valid_addr) {
             resume_addr = *(unsigned long *)((char *)fp + 8);
-            if (resume_addr >= 0x40000000 && resume_addr <= 0x40020000) {
+            if (resume_addr > 0) {
                 found_valid_addr = true;
             }
         }
@@ -59,8 +59,6 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
                 found_valid_fp = true;
             }
         }
-
-        // if (next_fp == 0xffffffffffffffff) break;
 
         if (found_valid_fp) {
             fp = next_fp;
