@@ -58,19 +58,30 @@ static void ps2_clock_edge_handler(void *device_ptr) {
     
     switch(dev->bits_received) {
         case 0:
-            dev->scancode_in_progress = 0;
-            dev->parity_count = 0;
+            if (bit == 0) {
+                dev->scancode_in_progress = 0;
+                dev->parity_count = 0;
+            } else {
+                dev->bits_received = -1;
+                return;
+            }
             break;
         case 1 ... 8:
             dev->scancode_in_progress |= (bit << (dev->bits_received - 1));
             dev->parity_count ^= bit;
             break;
         case 9:
-            dev->parity_count ^= bit;
+            if (bit != (dev->parity_count & 1)) {
+                dev->bits_received = -1;
+                return;
+            }
             break;
         case 10:
+            if (bit != 1) {
+                dev->bits_received = -1;
+                return;
+            }
             rb_enqueue(dev->scancode_buffer, dev->scancode_in_progress);
-            dev->bits_received = -1;
             break;
     }
     dev->bits_received++;
