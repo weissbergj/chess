@@ -10,7 +10,6 @@
 #include "ringbuffer.h"
 #include "timer.h"
 
-// First, declare the struct
 struct ps2_device {
     gpio_id_t clock_gpio;
     gpio_id_t data_gpio;
@@ -21,10 +20,8 @@ struct ps2_device {
     bool writing;
 };
 
-// Then, declare the type alias
 typedef struct ps2_device ps2_device_t;
 
-// Now declare function prototypes
 static void ps2_clock_edge_handler(void *device_ptr);
 static void ps2_wait_clock_high(ps2_device_t *dev);
 static void ps2_wait_clock_low(ps2_device_t *dev);
@@ -51,40 +48,80 @@ ps2_device_t *ps2_new(gpio_id_t clock_gpio, gpio_id_t data_gpio) {
     return dev;
 }
 
+// static void ps2_clock_edge_handler(void *device_ptr) {
+//     ps2_device_t *dev = (ps2_device_t *)device_ptr;
+//     int bit = gpio_read(dev->data_gpio);
+//     gpio_interrupt_clear(dev->clock_gpio);
+    
+//     switch(dev->bits_received) {
+//         case 0:
+//             dev->scancode_in_progress = 0;
+//             dev->parity_count = 0;
+//             break;
+//         case 1 ... 8:
+//             dev->scancode_in_progress |= (bit << (dev->bits_received - 1));
+//             dev->parity_count ^= bit;
+//             break;
+//         case 9:
+//             dev->parity_count ^= bit;
+//             break;
+//         case 10:
+//             rb_enqueue(dev->scancode_buffer, dev->scancode_in_progress);
+//             dev->bits_received = -1;
+//             break;
+//     }
+//     dev->bits_received++;
+// }
+
 static void ps2_clock_edge_handler(void *device_ptr) {
     ps2_device_t *dev = (ps2_device_t *)device_ptr;
     int bit = gpio_read(dev->data_gpio);
     gpio_interrupt_clear(dev->clock_gpio);
-    
-    switch(dev->bits_received) {
-        case 0:
-            if (bit == 0) {
-                dev->scancode_in_progress = 0;
-                dev->parity_count = 0;
-            } else {
-                dev->bits_received = -1;
+
+    switch (dev->bits_received) {
+        case 0: // Start bit
+            if (bit != 0) {
+                dev->bits_received = 0;
                 return;
             }
+            // Valid start bit
+            dev->scancode_in_progress = 0;
+            dev->parity_count = 0;
+            dev->bits_received++;
             break;
-        case 1 ... 8:
+
+        case 1 ... 8: // Data bits
             dev->scancode_in_progress |= (bit << (dev->bits_received - 1));
-            dev->parity_count ^= bit;
+            dev->parity_count ^= bit; // odd bit
+            dev->bits_received++;
             break;
-        case 9:
-            if (bit != (dev->parity_count & 1)) {
-                dev->bits_received = -1;
+
+        case 9: // Parity bit
+            if ((dev->parity_count ^ bit) != 1) {
+                // Parity error, reset state
+                dev->bits_received = 0;
                 return;
             }
+            dev->bits_received++;
             break;
-        case 10:
+
+        case 10: // Stop bit
             if (bit != 1) {
-                dev->bits_received = -1;
+                // Invalid stop bit, reset state
+                dev->bits_received = 0;
                 return;
             }
+            // Valid scancode received, enqueue it
             rb_enqueue(dev->scancode_buffer, dev->scancode_in_progress);
+            // Reset bits_received for  next scancode
+            dev->bits_received = 0;
             break;
+
+        default:
+            // Should not reach here, reset state
+            dev->bits_received = 0;
+            return;
     }
-    dev->bits_received++;
 }
 
 uint8_t ps2_read(ps2_device_t *dev) {
@@ -110,26 +147,39 @@ bool ps2_write(ps2_device_t *dev, uint8_t scancode) {
     
     for (int i = 0; i < 8; i++) {
         ps2_wait_clock_low(dev);
-        gpio_write(dev->data_gpio, (scancode >> i) & 1);
-        if ((scancode >> i) & 1) parity ^= 1;
+        int data_bit = (scancode >> i) & 1;
+        gpio_write(dev->data_gpio, data_bit);
+        parity ^= data_bit;
         ps2_wait_clock_high(dev);
     }
     
+    // Parity bit
     ps2_wait_clock_low(dev);
     gpio_write(dev->data_gpio, parity);
     ps2_wait_clock_high(dev);
     
+    // Stop bit
     ps2_wait_clock_low(dev);
     gpio_write(dev->data_gpio, 1);
     ps2_wait_clock_high(dev);
     
+    // Release data line
     gpio_set_input(dev->data_gpio);
     gpio_set_pullup(dev->data_gpio);
     
-    ps2_wait_clock_low(dev);
+
+    // ps2_wait_clock_low(dev);
     ps2_wait_clock_high(dev);
     
+    // Re-enable interrupts to receive ACK
     gpio_interrupt_enable(dev->clock_gpio);
+    
+    // Wait for ACK NEW NEW NEW NEW NEW NEW 11/22
+    uint8_t response = ps2_read(dev);
+    if (response != 0xFA) {
+        // ACK not received or error occurred
+        return false;
+    }
     
     return true;
 }
