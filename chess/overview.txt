@@ -1,0 +1,96 @@
+main
+│
+├── find_best_move (AI's turn)
+│   │
+│   ├── generate_moves (for AI)
+│   │   ├── generate_pawn_moves
+│   │   ├── generate_knight_moves
+│   │   ├── generate_bishop_moves
+│   │   ├── generate_rook_moves
+│   │   ├── generate_queen_moves
+│   │   └── generate_king_moves
+│   │
+│   ├── For each move:
+│   │   ├── score_move
+│   │   │   ├── evaluate_knight_development (if applicable)
+│   │   │   ├── evaluate_pawn_moves (if applicable)
+│   │   │   ├── evaluate_castling (if applicable)
+│   │   │   ├── evaluate_captures (if applicable)
+│   │   │   └── Other move-specific evaluations
+│   │   │
+│   │   ├── make_move (simulate move on a copy)
+│   │   └── minimax (evaluate move)
+│   │       │
+│   │       ├── Check terminal conditions
+│   │       ├── If depth > 0:
+│   │       │   ├── generate_moves (for opponent)
+│   │       │   ├── For each opponent's move:
+│   │       │   │   ├── make_move (simulate move)
+│   │       │   │   └── minimax (recursive call)
+│   │       │   └── Alpha-beta pruning
+│   │       │
+│   │       └── If depth == 0 or game over:
+│   │           └── evaluate_board
+│   │               ├── Initialize total_score
+│   │               ├── Loop through board squares:
+│   │               │   ├── For each piece:
+│   │               │   │   ├── Determine piece_value
+│   │               │   │   ├── Call evaluate_position
+│   │               │   │   │   ├── Switch based on piece type:
+│   │               │   │   │   │   ├── 'p' (pawn evaluation)
+│   │               │   │   │   │   ├── 'n' (knight evaluation)
+│   │               │   │   │   │   ├── 'b' (bishop evaluation)
+│   │               │   │   │   │   ├── 'r' (rook evaluation)
+│   │               │   │   │   │   ├── 'q' (queen evaluation)
+│   │               │   │   │   │   └── 'k' (king evaluation)
+│   │               │   │   │   └── Return position_value
+│   │               │   │   ├── Update total_score
+│   │               │   │   └── Update development and game phase metrics
+│   │               │   └── Continue looping through board
+│   │               ├── Apply additional evaluations:
+│   │               │   ├── Development bonuses
+│   │               │   ├── King safety (evaluate_king_safety)
+│   │               │   ├── Opening principles bonuses
+│   │               │   └── Endgame specific scoring
+│   │               └── Return total_score
+│   │
+│   └── Select move with best score
+│
+├── make_move (execute AI's move)
+│   ├── Update board
+│   ├── Handle special moves (castling, en passant, promotion)
+│   ├── Update game state (move_count, move_history)
+│   └── Check for draw conditions (e.g., fifty-move rule, repetition)
+│
+└── Proceed to player's turn
+
+
+
+score_move:
+Purpose: Evaluates a specific move based on various criteria such as piece type, position, and game phase.
+Interaction: Used during move generation and evaluation to assign a score to each potential move, influencing the decision-making process in the AI.
+
+
+evaluate_position:
+Purpose: Provides a positional evaluation for a specific piece on the board, considering factors like control of the center, piece safety, and mobility.
+Interaction: Called within score_move or directly during board evaluation to contribute to the overall assessment of a position.
+
+
+evaluate_king_safety:
+Purpose: Assesses the safety of the king, considering factors like pawn shields and open files.
+Interaction: Used in board evaluation to ensure the king's safety is factored into the overall position score, especially important in the early and middle game.
+
+
+evaluate_board (not shown but typically present):
+Purpose: Provides an overall evaluation of the board, summing up the scores from individual pieces and other strategic considerations.
+Interaction: Called by the minimax function to evaluate the board state at each node of the search tree.
+
+
+minimax:
+Purpose: Implements the minimax algorithm with alpha-beta pruning to explore possible moves and determine the best move by evaluating future board states.
+Interaction: Calls evaluate_board to assess board states and uses score_move to prioritize moves during the search.
+
+
+find_best_move:
+Purpose: Uses the minimax function to find the best move for the current player.
+Interaction: Generates possible moves, scores them using score_move, and evaluates them using minimax to select the optimal move.

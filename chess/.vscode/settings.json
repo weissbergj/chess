@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "utils.h": "c",
+        "string.h": "c",
+        "strings.h": "c",
+        "game_logic.h": "c",
+        "game_state.h": "c",
+        "move_generation.h": "c",
+        "board.h": "c",
+        "move_validation.h": "c",
+        "move_scoring.h": "c",
+        "minimax.h": "c"
+    }
+}

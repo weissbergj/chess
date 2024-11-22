@@ -1,0 +1,159 @@
+These are the functions included in each header.
+
+MOVE_SCORING
+// Function prototypes
+int score_move(char board[8][8], int src_row, int src_col, int dest_row, int dest_col, int move_count);
+int evaluate_position(char piece, int row, int col);
+int evaluate_board(char board[8][8], int current_move_count);
+int evaluate_king_safety(char board[8][8], int is_white);
+
+// Helper function prototypes
+int evaluate_knight_development(char piece, int src_row, int dest_row, int dest_col);
+int evaluate_pawn_moves(char piece, int src_row, int src_col, int dest_row);
+int evaluate_castling(char piece, int src_col, int dest_col);
+int evaluate_captures(char captured);
+
+
+MINIMAX
+int minimax(char board[8][8], int depth, int alpha, int beta, int maximizing_player, int current_move_count);
+void find_best_move(char board[8][8], int best_move[4], int is_white);
+
+
+BOARD
+void display_board(char board[8][8]);
+void display_move(int src_row, int src_col, int dest_row, int dest_col);
+int find_king(char board[8][8], int *king_row, int *king_col, int is_white);
+int count_pieces(char board[8][8]);
+int is_within_bounds(int row, int col);
+void reset_game(void);
+
+
+GAME_LOGIC / TESTED
+int is_game_over(char board[8][8], int *is_checkmate, int is_white_turn);
+int is_in_check(char board[8][8], int is_white_turn);
+int has_legal_moves(char board[8][8], int is_white_turn);
+int move_causes_check(char board[8][8], int src_row, int src_col, int dest_row, int dest_col);
+int can_castle_kingside(char board[8][8], int is_white_turn);
+int can_castle_queenside(char board[8][8], int is_white_turn);
+int is_square_attacked(char board[8][8], int row, int col, int is_white_turn);
+
+
+MOVE_VALIDATION / TESTED
+int is_valid_bishop_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_king_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_knight_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_pawn_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_queen_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_rook_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_move(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_en_passant(char board[8][8], int from_row, int from_col, int to_row, int to_col);
+int is_valid_input_format(char *input);
+
+
+MOVE_GENERATION / TESTED
+void generate_knight_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+void generate_pawn_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+void generate_sliding_moves(char board[8][8], int row, int col, const int directions[][2], 
+                            int num_directions, int moves[][4], int *move_count);
+void generate_rook_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+void generate_bishop_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+void generate_queen_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+void parse_move(char *input, int *src_row, int *src_col, int *dest_row, int *dest_col);
+void generate_king_moves(char board[8][8], int row, int col, int moves[][4], int *move_count);
+
+void make_move(char board[8][8], int src_row, int src_col, int dest_row, int dest_col, int is_real_move);
+
+
+GAME_STATE / TESTED
+typedef struct {
+    int from_row;
+    int from_col;
+    int to_row;
+    int to_col;
+    char piece;
+    char captured;
+} Move;
+
+typedef struct {
+    char board[8][8];
+    int is_white_turn;
+    int move_count;
+} Position;
+
+typedef enum {
+    PLAYING,
+    DRAW_BY_REPETITION,
+    DRAW_BY_FIFTY_MOVE,
+    CHECKMATE,
+    STALEMATE
+} GameState;
+
+extern char board[8][8];
+extern char initial_board[8][8];
+extern Move move_history[MAX_HISTORY];
+extern int move_count;
+extern int white_king_moved;
+extern int black_king_moved;
+extern int white_rooks_moved[2];
+extern int black_rooks_moved[2];
+extern int moves_without_capture;
+extern Position position_history[MAX_POSITIONS];
+extern int position_count;
+extern GameState game_state;
+extern int g_positions_examined;
+extern int g_max_positions;
+
+void reset_game();
+int record_position();
+int is_repetition();
+int is_insufficient_material();
+int is_endgame();
+int is_near_stalemate();
+int is_open_file();
+int is_white_piece(char piece);
+int is_black_piece(char piece);
+int can_capture(char src_piece, char dest_piece);
+
+
+UTILS / TESTED
+int abs(int x);
+char tolower(char c);
+int max(int a, int b);
+int min(int a, int b);
+void itoa(int num, char *str);
+void uart_getstring(char *buffer, int length);
+
+
+
+Available headers
+// #include "assert.h"
+// #include "backtrace.h"
+// #include "ccu.h"
+// #include "console.h"
+// #include "de.h"
+// #include "disassemble.h"
+// #include "fb.h"
+// #include "font.h"
+// #include "gl.h"
+// #include "gpio.h"
+// #include "gpio_extra.h"
+// #include "gpio_interrupt.h"
+// #include "hdmi.h"
+// #include "hstimer.h"
+// #include "interrupts.h"
+// #include "keyboard.h"
+// #include "malloc.h"
+// #include "mango.h"
+// #include "memmap.h"
+// #include "mouse.h"
+// #include "printf.h"
+// #include "ps2.h"
+// #include "ps2_keys.h"
+// #include "rand.h"
+// #include "ringbuffer.h"
+// #include "shell.h"
+// #include "shell_commands.h"
+// #include "strings.h"
+// #include "symtab.h"
+// #include "timer.h"
+// #include "uart.h"
