@@ -10,14 +10,74 @@
 // helper function implemented in file backtrace_asm.s
 extern unsigned long backtrace_get_fp(void);
 
-// Assign retest to this previously restrictive check if (fp < 0x4ffff000 || fp >= 0x50000000) break;
+// int backtrace_gather_frames(frame_t f[], int max_frames) {
+//     unsigned long fp = backtrace_get_fp(); 
+//     int i = 0;  
+
+//     while (fp != 0 && i < max_frames) { 
+//         // Stack range check for fp
+//         if (fp < 0x40000000 || fp >= 0x50000000) break;
+
+//         // Try both offsets for return address
+//         unsigned long resume_addr;
+//         bool found_valid_addr = false;
+
+//         // Try fp-8
+//         resume_addr = *(unsigned long *)((char *)fp - 8);
+//         if (resume_addr > 0) {
+//             found_valid_addr = true;
+//         }
+
+//         // Try fp+8 if needed
+//         if (!found_valid_addr) {
+//             resume_addr = *(unsigned long *)((char *)fp + 8);
+//             if (resume_addr > 0) {
+//                 found_valid_addr = true;
+//             }
+//         }
+
+//         if (found_valid_addr) {
+//             f[i].resume_addr = resume_addr;
+//             i++;
+//         }
+
+//         // Try both offsets for next frame pointer
+//         unsigned long next_fp;
+//         bool found_valid_fp = false;
+
+//         // Try fp-16
+//         next_fp = *(unsigned long *)((char *)fp - 16);
+//         if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
+//             found_valid_fp = true;
+//         }
+
+//         // Try fp+0 if needed
+//         if (!found_valid_fp) {
+//             next_fp = *(unsigned long *)fp;
+//             if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
+//                 found_valid_fp = true;
+//             }
+//         }
+
+//         if (found_valid_fp) {
+//             fp = next_fp;
+//         } else {
+//             break;
+//         }
+//     }
+
+//     return i;  
+// }
+
 int backtrace_gather_frames(frame_t f[], int max_frames) {
     unsigned long fp = backtrace_get_fp(); 
     int i = 0;  
 
     while (fp != 0 && i < max_frames) { 
-        // Stack range check for fp
-        if (fp < 0x40000000 || fp >= 0x50000000) break;
+        // Check if fp is aligned
+        if ((fp % sizeof(unsigned long)) != 0) {
+            break; // Exit if fp is misaligned
+        }
 
         // Try both offsets for return address
         unsigned long resume_addr;
@@ -48,14 +108,15 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
 
         // Try fp-16
         next_fp = *(unsigned long *)((char *)fp - 16);
-        if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
+        // Check if next_fp is aligned and valid
+        if ((next_fp % sizeof(unsigned long)) == 0 && next_fp != 0) {
             found_valid_fp = true;
         }
 
         // Try fp+0 if needed
         if (!found_valid_fp) {
             next_fp = *(unsigned long *)fp;
-            if (next_fp >= 0x40000000 && next_fp < 0x50000000) {
+            if ((next_fp % sizeof(unsigned long)) == 0 && next_fp != 0) {
                 found_valid_fp = true;
             }
         }
@@ -69,6 +130,8 @@ int backtrace_gather_frames(frame_t f[], int max_frames) {
 
     return i;  
 }
+
+
 
 void backtrace_print_frames(frame_t f[], int n) {
     char labelbuf[128];
