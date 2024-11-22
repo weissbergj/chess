@@ -9,6 +9,7 @@
         "board.h": "c",
         "move_validation.h": "c",
         "move_scoring.h": "c",
-        "minimax.h": "c"
+        "minimax.h": "c",
+        "stdbool.h": "c"
     }
 }

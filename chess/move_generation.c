@@ -4,9 +4,8 @@
 #include "game_logic.h"
 #include "utils.h"
 #include "uart.h"
-#include "printf.h"
+#include "strings.h"
 
-// Generate all possible knight moves from a given position
 void generate_knight_moves(char board[8][8], int row, int col, int moves[][4], int *move_count) {
     static const int knight_moves[8][2] = {
         {-2, -1}, {-2, 1}, {-1, -2}, {-1, 2},
@@ -21,57 +20,82 @@ void generate_knight_moves(char board[8][8], int row, int col, int moves[][4], i
         
         if (is_within_bounds(new_row, new_col)) {
             char target = board[new_row][new_col];
+            // Check if the move is valid
             if (target == '.' || (is_black_piece(piece) ? is_white_piece(target) : is_black_piece(target))) {
-                moves[*move_count][0] = row;
-                moves[*move_count][1] = col;
-                moves[*move_count][2] = new_row;
-                moves[*move_count][3] = new_col;
-                (*move_count)++;
+                // Use the validation function to check if the move is valid
+                if (is_valid_knight_move(board, row, col, new_row, new_col)) {
+                    moves[*move_count][0] = row;
+                    moves[*move_count][1] = col;
+                    moves[*move_count][2] = new_row;
+                    moves[*move_count][3] = new_col;
+                    (*move_count)++;
+                }
             }
         }
     }
 }
 
-// Generate all possible pawn moves from a given position
 void generate_pawn_moves(char board[8][8], int row, int col, int moves[][4], int *move_count) {
     char piece = board[row][col];
     int direction = is_white_piece(piece) ? -1 : 1;
     int start_row = is_white_piece(piece) ? 6 : 1;
-    
+
     // Forward move
     if (is_within_bounds(row + direction, col) && board[row + direction][col] == '.') {
-        moves[*move_count][0] = row;
-        moves[*move_count][1] = col;
-        moves[*move_count][2] = row + direction;
-        moves[*move_count][3] = col;
-        (*move_count)++;
+        // Simulate the move
+        char temp_board[8][8];
+        memcpy(temp_board, board, sizeof(temp_board));
+        make_move(temp_board, row, col, row + direction, col, 0);
         
-        // Initial two-square move
-        if (row == start_row && board[row + 2 * direction][col] == '.') {
+        // Check if the king is in check after the move
+        if (!is_in_check(temp_board, is_white_piece(piece))) {
             moves[*move_count][0] = row;
             moves[*move_count][1] = col;
-            moves[*move_count][2] = row + 2 * direction;
+            moves[*move_count][2] = row + direction;
             moves[*move_count][3] = col;
             (*move_count)++;
         }
+        
+        // Initial two-square move
+        if (row == start_row && board[row + 2 * direction][col] == '.') {
+            // Simulate the two-square move
+            memcpy(temp_board, board, sizeof(temp_board));
+            make_move(temp_board, row, col, row + 2 * direction, col, 0);
+            
+            // Check if the king is in check after the move
+            if (!is_in_check(temp_board, is_white_piece(piece))) {
+                moves[*move_count][0] = row;
+                moves[*move_count][1] = col;
+                moves[*move_count][2] = row + 2 * direction;
+                moves[*move_count][3] = col;
+                (*move_count)++;
+            }
+        }
     }
-    
+
     // Captures
     for (int dc = -1; dc <= 1; dc += 2) {
         if (is_within_bounds(row + direction, col + dc)) {
             char target = board[row + direction][col + dc];
             if (target != '.' && (is_black_piece(piece) ? is_white_piece(target) : is_black_piece(target))) {
-                moves[*move_count][0] = row;
-                moves[*move_count][1] = col;
-                moves[*move_count][2] = row + direction;
-                moves[*move_count][3] = col + dc;
-                (*move_count)++;
+                // Simulate the capture move
+                char temp_board[8][8];
+                memcpy(temp_board, board, sizeof(temp_board));
+                make_move(temp_board, row, col, row + direction, col + dc, 0);
+                
+                // Check if the king is in check after the move
+                if (!is_in_check(temp_board, is_white_piece(piece))) {
+                    moves[*move_count][0] = row;
+                    moves[*move_count][1] = col;
+                    moves[*move_count][2] = row + direction;
+                    moves[*move_count][3] = col + dc;
+                    (*move_count)++;
+                }
             }
         }
     }
 }
 
-// Generate sliding moves for rooks, bishops, and queens
 void generate_sliding_moves(char board[8][8], int row, int col, const int directions[][2], 
                             int num_directions, int moves[][4], int *move_count) {
     char piece = board[row][col];
@@ -84,22 +108,35 @@ void generate_sliding_moves(char board[8][8], int row, int col, const int direct
         
         while (is_within_bounds(new_row, new_col)) {
             char target = board[new_row][new_col];
+            // Simulate the move
+            char temp_board[8][8];
+            memcpy(temp_board, board, sizeof(temp_board));
+            
             if (target == '.') {
-                moves[*move_count][0] = row;
-                moves[*move_count][1] = col;
-                moves[*move_count][2] = new_row;
-                moves[*move_count][3] = new_col;
-                (*move_count)++;
-            } else {
-                if ((is_black_piece(piece) && is_white_piece(target)) ||
-                    (is_white_piece(piece) && is_black_piece(target))) {
+                // Check if the move is valid
+                make_move(temp_board, row, col, new_row, new_col, 0);
+                if (!is_in_check(temp_board, is_white_piece(piece))) {
                     moves[*move_count][0] = row;
                     moves[*move_count][1] = col;
                     moves[*move_count][2] = new_row;
                     moves[*move_count][3] = new_col;
                     (*move_count)++;
                 }
-                break;
+            } else {
+                // Check for captures
+                if ((is_black_piece(piece) && is_white_piece(target)) ||
+                    (is_white_piece(piece) && is_black_piece(target))) {
+                    // Check if the move is valid
+                    make_move(temp_board, row, col, new_row, new_col, 0);
+                    if (!is_in_check(temp_board, is_white_piece(piece))) {
+                        moves[*move_count][0] = row;
+                        moves[*move_count][1] = col;
+                        moves[*move_count][2] = new_row;
+                        moves[*move_count][3] = new_col;
+                        (*move_count)++;
+                    }
+                }
+                break; // Stop sliding after capturing
             }
             new_row += dr;
             new_col += dc;
@@ -222,6 +259,5 @@ void make_move(char board[8][8], int src_row, int src_col, int dest_row, int des
         }
 
         move_count++;
-        printf("mouve count from move_generation %d\n", move_count); // WE KNOW MOVE COUNT IS ACCURATE! idk abt "current_move_count tho... wherever that was"
     }
 }

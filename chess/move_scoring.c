@@ -5,16 +5,11 @@
 #include "move_scoring.h"
 #include "game_logic.h"
 #include "game_state.h"
+#include "move_sort.h"
 #include "utils.h"
 #include "timer.h"
-#include "printf.h"
 
-
-// TO DO 
-// Figure out if we really want the evaluate pawn shield/all the evalute stuff called in score_move... i think this is where it breaks
-// breaks integration of score_move, evaluate position/board cuz only board called in find_best_move/minimax
-
-
+int evaluate_piece_captures(char board[8][8], int row, int col, char piece, int is_white);
 
 // int is_repetitive_move(const int move[4], const int move_history[][4], int history_count) {
 //     if (history_count < 2) return 0; // Not enough history
@@ -31,14 +26,14 @@
 //     }
 // }
 
-// Helper function to evaluate pawn shield
+// Evaluate pawn shield
 int evaluate_pawn_shield(char board[8][8], int king_row, int king_col, int is_white, int early_game) {
     int score = 0;
     int pawn_rank = is_white ? king_row - 1 : king_row + 1;
     if (pawn_rank >= 0 && pawn_rank < 8) {
         for (int col = max(0, king_col - 1); col <= min(7, king_col + 1); col++) {
             if (board[pawn_rank][col] == (is_white ? 'P' : 'p')) {
-                score += early_game ? 30 : 10;  // Bonus for pawn shield
+                score += early_game ? 40 : 20; // Adjusted bonus for pawn shield
             }
         }
     }
@@ -48,306 +43,135 @@ int evaluate_pawn_shield(char board[8][8], int king_row, int king_col, int is_wh
 // Evaluate king safety
 int evaluate_king_safety(char board[8][8], int is_white) {
     int king_row, king_col;
-    if (!find_king(board, &king_row, &king_col, is_white)) {
-        return 0;  // Safety check in case king not found
-    }
-    
+    if (!find_king(board, &king_row, &king_col, is_white)) return 0; // Safety check
+
     int safety_score = 0;
     int early_game = move_count < 20;
-    
-    // Penalize early king movement from back rank
     int start_rank = is_white ? 7 : 0;
-    if (early_game && king_row != start_rank) {
-        safety_score -= 100;  // Penalty for early king movement
-    }
-    
-    // Evaluate pawn shield
+
+    // Penalize early king movement
+    if (early_game && king_row != start_rank) safety_score -= 10 * abs(king_row - start_rank);
+
+    // Pawn shield
     safety_score += evaluate_pawn_shield(board, king_row, king_col, is_white, early_game);
-    
+
     // Penalize open files in late game
     if (!early_game) {
         for (int col = max(0, king_col - 1); col <= min(7, king_col + 1); col++) {
-            if (is_open_file(board, col, is_white)) {
-                safety_score -= 20;
-            }
+            if (is_open_file(board, col, is_white)) safety_score -= 20;
         }
     }
-    
+
     return is_white ? safety_score : -safety_score;
 }
 
-// Helper function to evaluate knight development
-int evaluate_knight_development(char piece, int src_row, int dest_row, int dest_col) {
+int evaluate_pawn(int row, int col, int current_move_count) {
     int score = 0;
-    int home_rank = is_white_piece(piece) ? 7 : 0;
-    if (src_row == home_rank) {  // Knight hasn't moved yet
-        score += 8000;  // Huge bonus for developing knights
-        // Extra bonus for f3/c3 or f6/c6
-        if ((is_white_piece(piece) && dest_row == 5 && (dest_col == 2 || dest_col == 5)) ||  // c3/f3
-            (!is_white_piece(piece) && dest_row == 2 && (dest_col == 2 || dest_col == 5))) { // c6/f6
-            score += 4000;
+    char piece = board[row][col];
+
+    // Enhance pawn structure evaluation
+    if (col >= 2 && col <= 5) {
+        score += 2;  // Center control
+    }
+    if ((col == 3 || col == 4) && (row >= 2 && row <= 5)) {
+        score += 3;  // Stronger center pawn
+    }
+
+    // Stronger advancement incentive in endgame
+    int endgame = (current_move_count > 30);
+    score += is_white_piece(piece) ? (endgame ? (7 - row) : (7 - row) / 2) : (endgame ? row : row / 2);
+
+    // Penalize doubled pawns
+    int doubled = 0;
+    for (int r = 0; r < 8; r++) {
+        if (r != row && tolower(board[r][col]) == 'p') {
+            doubled = 1;
+            break;
+        }
+    }
+    if (doubled) score -= 5;
+    return score;
+}
+
+int evaluate_knight(int row, int col) {
+    int score = 0;
+    char piece = board[row][col];
+
+    // More nuanced knight positioning
+    int center_dist = abs(3 - col) + abs(3 - row);
+    score += (6 - center_dist);  // Max bonus in center
+
+    // Knights are better with pawns nearby for protection
+    for (int dr = -1; dr <= 1; dr++) {
+        for (int dc = -1; dc <= 1; dc++) {
+            if (is_within_bounds(row + dr, col + dc)) {
+                char nearby = board[row + dr][col + dc];
+                if (tolower(nearby) == 'p' && is_white_piece(nearby) == is_white_piece(piece)) {
+                    score += 1;  // Bonus for nearby pawns
+                }
+            }
         }
     }
     return score;
 }
 
-// Helper function to evaluate pawn moves
-int evaluate_pawn_moves(char piece, int src_row, int src_col, int dest_row) {
+int evaluate_bishop(int row, int col) {
     int score = 0;
-    if ((src_col == 3 || src_col == 4) &&  // d or e pawn
-        ((is_white_piece(piece) && src_row == 6 && dest_row == 4) ||  // d4/e4
-         (!is_white_piece(piece) && src_row == 1 && dest_row == 3))) {  // d5/e5
-        score += 6000;  // Strong bonus for initial center pawn moves
+    char piece = board[row][col];
+
+    // Enhanced bishop evaluation
+    if ((row + col) % 2 == 0) {
+        score += 2;  // Bonus for controlling light squares
     }
-    // Discourage wing pawn moves
-    if (src_col < 2 || src_col > 5) {  // a,b,g,h pawns
-        score -= 5000;
+
+    // Count available diagonals
+    int mobility = 0;
+    for (int dr = -1; dr <= 1; dr += 2) {
+        for (int dc = -1; dc <= 1; dc += 2) {
+            int r = row + dr, c = col + dc;
+            while (is_within_bounds(r, c) && board[r][c] == '.') {
+                mobility++;
+                r += dr;
+                c += dc;
+            }
+        }
+    }
+    score += mobility / 2;  // Bonus for mobility
+    return score;
+}
+
+int evaluate_rook(int row, int col) {
+    int score = 0;
+    char piece = board[row][col];
+
+    // Enhanced rook evaluation
+    int open_file = 1;
+    int semi_open = 1;
+    for (int r = 0; r < 8; r++) {
+        if (r != row) {
+            char piece_on_file = board[r][col];
+            if (piece_on_file != '.') {
+                open_file = 0;
+                if (tolower(piece_on_file) == 'p' && is_white_piece(piece_on_file) == is_white_piece(piece)) {
+                    semi_open = 0;
+                }
+            }
+        }
+    }
+    if (open_file) score += 5;  // Bonus for open file
+    else if (semi_open) score += 3;  // Bonus for semi-open file
+
+    // Bonus for 7th rank (2nd for black)
+    if ((is_white_piece(piece) && row == 1) || (!is_white_piece(piece) && row == 6)) {
+        score += 3;
     }
     return score;
 }
 
-// Helper function to evaluate castling
-int evaluate_castling(char piece, int src_col, int dest_col) {
+int evaluate_queen(int row, int col, int current_move_count) {
     int score = 0;
-    if (abs(dest_col - src_col) == 2) {
-        score += 5000;  // Huge bonus for castling
-    } else {
-        score -= 6000;  // Strong penalty for other king moves
-    }
-    return score;
-}
+    char piece = board[row][col];
 
-// Helper function to evaluate captures
-int evaluate_captures(char captured) {
-    int score = 0;
-    switch(tolower(captured)) {
-        case 'q': score += 900; break;
-        case 'r': score += 500; break;
-        case 'b': case 'n': score += 300; break;
-        case 'p': score += 100; break;
-    }
-    return score;
-}
-
-// Main function to score a move
-int score_move(char board[8][8], int src_row, int src_col, int dest_row, int dest_col, int move_count) {
-    int score = 0;
-    char piece = board[src_row][src_col];
-    char captured = board[dest_row][dest_col];
-        
-    // Early game focus (first 15 moves)      // NOT SURE IF THIS DOES ANYTHING FIX
-    if (move_count < 15) {
-        if (tolower(piece) == 'n') {
-            score += evaluate_knight_development(piece, src_row, dest_row, dest_col);
-        }
-        if (tolower(piece) == 'p') {
-            score += evaluate_pawn_moves(piece, src_row, src_col, dest_row);
-        }
-        if (tolower(piece) == 'k') {
-            score += evaluate_castling(piece, src_col, dest_col);
-        }
-        if (tolower(piece) == 'q') {
-            score -= 6000;  // Discourage early queen moves
-        }
-    }
-    
-    // Captures (lower priority in opening)
-    if (captured != '.') {
-        score += evaluate_captures(captured);
-    }
-    
-    // Standard positional bonuses
-    char temp_board[8][8];
-    memcpy(temp_board, board, sizeof(temp_board));
-    make_move(temp_board, src_row, src_col, dest_row, dest_col, 0);
-    
-    if (is_in_check(temp_board, !is_white_piece(piece))) {
-        score += 50;  // Small bonus for giving check
-    }
-    
-    if (score > 0) {
-        printf("Scoring move: %c from (%d, %d) to (%d, %d)\n", piece, src_row, src_col, dest_row, dest_col);
-        printf("Final score for move: %d\n", score);
-    }
-
-    return score;
-}
-
-int evaluate_position(char piece, int row, int col) {
-    int position_value = 0;
-    
-    switch (tolower(piece)) {
-        case 'p': {
-            // Enhance pawn structure evaluation
-            if (col >= 2 && col <= 5) {
-                position_value += 2;
-            }
-            if ((col == 3 || col == 4) && (row >= 2 && row <= 5)) {
-                position_value += 3;
-            }
-            
-            // Stronger advancement incentive in endgame
-            int endgame = (move_count > 30);
-            if (is_white_piece(piece)) {
-                position_value += endgame ? (7 - row) : (7 - row) / 2;
-            } else {
-                position_value += endgame ? row : row / 2;
-            }
-            
-            // Penalize doubled pawns
-            int doubled = 0;
-            for (int r = 0; r < 8; r++) {
-                if (r != row && tolower(board[r][col]) == 'p') {
-                    doubled = 1;
-                    break;
-                }
-            }
-            if (doubled) position_value -= 5;
-            break;
-        }
-        case 'n': {
-            // More nuanced knight positioning
-            int center_dist = abs(3 - col) + abs(3 - row);
-            position_value += (6 - center_dist);  // Max bonus in center
-            
-            // Knights are better with pawns nearby for protection
-            for (int dr = -1; dr <= 1; dr++) {
-                for (int dc = -1; dc <= 1; dc++) {
-                    if (is_within_bounds(row + dr, col + dc)) {
-                        char nearby = board[row + dr][col + dc];
-                        if (tolower(nearby) == 'p' && 
-                            is_white_piece(nearby) == is_white_piece(piece)) {
-                            position_value += 1;
-                        }
-                    }
-                }
-            }
-            break;
-        }
-        case 'b': {
-            // Enhanced bishop evaluation
-            if ((row + col) % 2 == 0) {
-                position_value += 2;
-            }
-            
-            // Count available diagonals
-            int mobility = 0;
-            for (int dr = -1; dr <= 1; dr += 2) {
-                for (int dc = -1; dc <= 1; dc += 2) {
-                    int r = row + dr, c = col + dc;
-                    while (is_within_bounds(r, c) && board[r][c] == '.') {
-                        mobility++;
-                        r += dr;
-                        c += dc;
-                    }
-                }
-            }
-            position_value += mobility / 2;
-            break;
-        }
-        case 'r': {
-            // Enhanced rook evaluation
-            int open_file = 1;
-            int semi_open = 1;
-            for (int r = 0; r < 8; r++) {
-                if (r != row) {
-                    char piece_on_file = board[r][col];
-                    if (piece_on_file != '.') {
-                        open_file = 0;
-                        if (tolower(piece_on_file) == 'p' && 
-                            is_white_piece(piece_on_file) == is_white_piece(piece)) {
-                            semi_open = 0;
-                        }
-                    }
-                }
-            }
-            if (open_file) position_value += 5;
-            else if (semi_open) position_value += 3;
-            
-            // Bonus for 7th rank (2nd for black)
-            if ((is_white_piece(piece) && row == 1) || 
-                (!is_white_piece(piece) && row == 6)) {
-                position_value += 3;
-            }
-            break;
-        }
-        case 'k': {
-            // Different evaluation based on game phase
-            if (move_count < 20) {  // Opening/early middle game
-                // Encourage castling position
-                if (is_white_piece(piece)) {
-                    if (row == 7 && (col == 6 || col == 2)) position_value += 5;
-                } else {
-                    if (row == 0 && (col == 6 || col == 2)) position_value += 5;
-                }
-            } else {  // Late middle game/endgame
-                // Encourage king activity
-                int center_dist = abs(3 - col) + abs(3 - row);
-                position_value += (7 - center_dist) / 2;
-            }
-            break;
-        }
-    }
-    printf("Position move in evaluate_position %d\n", position_value);
-    return position_value;
-}
-
-int evaluate_board(char board[8][8], int current_move_count) {
-    int total_score = 0;
-    
-    // Material values
-    const int PAWN_VALUE = 100;
-    const int KNIGHT_VALUE = 320;
-    const int BISHOP_VALUE = 330;
-    const int ROOK_VALUE = 500;
-    const int QUEEN_VALUE = 900;
-    const int KING_VALUE = 20000;
-    
-    // Updated piece-square tables with stronger values
-    const int pawn_table[8][8] = {
-        { 0,  0,   0,   0,   0,   0,  0,  0},
-        {50, 50,  50,  50,  50,  50, 50, 50},
-        {10, 10, 100, 200, 200, 100, 10, 10},  // Much stronger center pawn bonus
-        { 5,  5,  50, 100, 100,  50,  5,  5},
-        { 0,  0,   0,  50,  50,   0,  0,  0},
-        { 5, -5, -10,   0,   0, -10, -5,  5},
-        {-5,-10,-500,-500,-500,-500,-10, -5},  // Heavy penalty for f2/f7
-        { 0,  0,   0,   0,   0,   0,  0,  0}
-    };
-    
-    const int knight_table[8][8] = {
-        {-50,-40,-30,-30,-30,-30,-40,-50},
-        {-40,-20,  0,  5,  5,  0,-20,-40},
-        {-30, 25, 35, 40, 40, 35, 25,-30},
-        {-30, 35,400,450,450,400, 35,-30},  // Huge bonus for f3/c3
-        {-30, 25, 35, 40, 40, 35, 25,-30},
-        {-30,  0, 10, 15, 15, 10,  0,-30},
-        {-40,-20,  0,  5,  5,  0,-20,-40},
-        {-2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000}  // Extreme back rank penalty
-    };
-    
-    const int bishop_table[8][8] = {
-        {-20,-10,-10,-10,-10,-10,-10,-20},
-        {-10,  0, 20, 20, 20, 20,  0,-10},
-        {-10, 20, 25, 30, 30, 25, 20,-10},
-        {-10, 25, 25,100,100, 25, 25,-10},  // Better center control
-        {-10, 20, 30, 30, 30, 30, 20,-10},
-        {-10, 30, 30, 30, 30, 30, 30,-10},
-        {-10,  5,  0,  0,  0,  0,  5,-10},
-        {-2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000}  // Extreme back rank penalty
-    };
-    
-    const int rook_table[8][8] = {
-        { 0,  0,  0,  0,  0,  0,  0,  0},
-        { 5, 10, 10, 10, 10, 10, 10,  5},
-        {-5,  0,  0,  0,  0,  0,  0, -5},
-        {-5,  0,  0,  0,  0,  0,  0, -5},
-        {-5,  0,  0,  0,  0,  0,  0, -5},
-        {-5,  0,  0,  0,  0,  0,  0, -5},
-        {-5,  0,  0,  0,  0,  0,  0, -5},
-        { 0,  0,  0,  5,  5,  0,  0,  0}
-    };
-    
     const int queen_table[8][8] = {
         {-20,-10,-10, -5, -5,-10,-10,-20},
         {-10,-20,-20,-20,-20,-20,-20,-10},  // Discourage early queen moves
@@ -358,323 +182,289 @@ int evaluate_board(char board[8][8], int current_move_count) {
         {-10,  0,  5,  0,  0,  0,  0,-10},
         {-20,-10,-10, -5, -5,-10,-10,-20}
     };
-    
-    const int king_table_middlegame[8][8] = {
-        {-30,-40,-40,-50,-50,-40,-40,-30},
-        {-30,-40,-40,-50,-50,-40,-40,-30},
-        {-50,-60,-60,-70,-70,-60,-60,-50},  // Increased penalties
-        {-70,-80,-80,-90,-90,-80,-80,-70},  // Much worse in center
-        {-70,-80,-80,-90,-90,-80,-80,-70},
-        {-50,-60,-60,-70,-70,-60,-60,-50},
-        {-10,-20,-20,-20,-20,-20,-20,-10},
-        { 20, 30, 10,  0,  0, 10, 30, 20}   // Back rank is safe
-    };
-    
+
+    // Queen positioning based on piece-square table
+    score += queen_table[row][col];
+
+    // Penalize early queen moves
+    if (current_move_count < 15) {
+        if (is_white_piece(piece)) {
+            if (row != 7 || col != 3) {  // Queen moved
+                score -= 1000;  // Strong penalty
+            }
+        } else {
+            if (row != 0 || col != 3) {
+                score -= 80;  // Penalty for black queen
+            }
+        }
+    }
+    return score;
+}
+
+int evaluate_king(int row, int col, int current_move_count) {
+    int score = 0;
+    char piece = board[row][col];
+
+    // King evaluation based on game phase
+    if (current_move_count < 20) {  // Opening/early middle game
+        // Encourage castling position
+        if (is_white_piece(piece)) {
+            if (row == 7 && (col == 6 || col == 2)) score += 5;  // Castled
+        } else {
+            if (row == 0 && (col == 6 || col == 2)) score += 5;  // Castled
+        }
+    } else {  // Late middle game/endgame
+        // Encourage king activity
+        int center_dist = abs(3 - col) + abs(3 - row);
+        score += (7 - center_dist) / 2;  // Bonus for being active
+    }
+    return score;
+}
+
+int can_attack(char piece, int from_row, int from_col, int to_row, int to_col, char board[8][8]) {
+    // Check if the target position is within bounds
+    if (!is_within_bounds(to_row, to_col)) {
+        return 0; // Out of bounds
+    }
+
+    // Handle pawns separately due to unique attack pattern
+    if (tolower(piece) == 'p') {
+        int direction = is_white_piece(piece) ? -1 : 1; // White pawns attack upwards
+        if ((to_row == from_row + direction) &&
+            (to_col == from_col - 1 || to_col == from_col + 1) &&
+            board[to_row][to_col] != '.' &&
+            is_white_piece(board[to_row][to_col]) != is_white_piece(piece)) {
+            return 1; // Pawn can attack the target position
+        }
+        return 0; // Pawns can't attack otherwise
+    }
+
+    // Offsets for knight moves
+    if (tolower(piece) == 'n') {
+        int knight_offsets[8][2] = {{-2, -1}, {-1, -2}, {1, -2}, {2, -1},
+                                    {2, 1}, {1, 2}, {-1, 2}, {-2, 1}};
+        for (int i = 0; i < 8; i++) {
+            if (from_row + knight_offsets[i][0] == to_row &&
+                from_col + knight_offsets[i][1] == to_col) {
+                return 1; // Knight can attack the target position
+            }
+        }
+        return 0;
+    }
+
+    // Sliding pieces (bishop, rook, queen)
+    if (tolower(piece) == 'b' || tolower(piece) == 'r' || tolower(piece) == 'q') {
+        int directions[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Rook directions
+                                {-1, -1}, {1, 1}, {1, -1}, {-1, 1}}; // Bishop directions
+        int limit = (tolower(piece) == 'r') ? 4 : (tolower(piece) == 'b') ? 4 : 8;
+
+        for (int d = 0; d < limit; d++) {
+            int current_row = from_row + directions[d][0];
+            int current_col = from_col + directions[d][1];
+            while (is_within_bounds(current_row, current_col)) {
+                if (current_row == to_row && current_col == to_col &&
+                    is_white_piece(board[current_row][current_col]) != is_white_piece(piece)) {
+                    return 1; // Can attack the target position
+                }
+                if (board[current_row][current_col] != '.') break; // Blocked by a piece
+                current_row += directions[d][0];
+                current_col += directions[d][1];
+            }
+        }
+        return 0;
+    }
+
+    // King can attack adjacent squares
+    if (tolower(piece) == 'k') {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) continue;
+                if (from_row + dr == to_row && from_col + dc == to_col) {
+                    return 1; // King can attack the target position
+                }
+            }
+        }
+        return 0;
+    }
+
+    return 0; // Unknown piece or invalid attack
+}
+
+
+int evaluate_position(char piece, int row, int col, int current_move_count, char board[8][8]) {
+    int position_value = 0;
+
+    int capture_penalty = 0;
+    for (int r = max(0, row - 2); r <= min(7, row + 2); r++) {
+        for (int c = max(0, col - 2); c <= min(7, col + 2); c++) {
+            char target_piece = board[r][c];
+            if (is_white_piece(target_piece) != is_white_piece(piece) && target_piece != '.') {
+                // Check if the opponent's piece can directly attack the square
+                if (can_attack(target_piece, r, c, row, col, board)) {
+                    int attacker_value = evaluate_captures(target_piece); // Value of attacker
+                    capture_penalty -= 500; // Scaled penalty
+                }
+            }
+        }
+    }
+    capture_penalty = max(capture_penalty, -500);
+
+    // Add the capture penalty to the position value
+    position_value += capture_penalty;
+
+    switch (tolower(piece)) {
+        case 'p':
+            position_value += evaluate_pawn(row, col, current_move_count);
+            break;
+        case 'n':
+            position_value += evaluate_knight(row, col);
+            break;
+        case 'b':
+            position_value += evaluate_bishop(row, col);
+            break;
+        case 'r':
+            position_value += evaluate_rook(row, col);
+            break;
+        case 'q':
+            position_value += evaluate_queen(row, col, current_move_count);
+            break;
+        case 'k':
+            position_value += evaluate_king(row, col, current_move_count);
+            break;
+    }
+    return position_value;
+}
+
+// Material values
+const int PAWN_VALUE = 100;
+const int KNIGHT_VALUE = 320;
+const int BISHOP_VALUE = 330;
+const int ROOK_VALUE = 500;
+const int QUEEN_VALUE = 900;
+const int KING_VALUE = 20000;
+
+
+int evaluate_piece_captures(char board[8][8], int row, int col, char piece, int is_white) {
+    int capture_score = 0;
+
+    if (tolower(piece) == 'p') {
+        // Pawns only capture diagonally
+        int attack_row = is_white ? row - 1 : row + 1;
+        for (int attack_col = col - 1; attack_col <= col + 1; attack_col += 2) {
+            if (is_within_bounds(attack_row, attack_col) && board[attack_row][attack_col] != '.') {
+                char target_piece = board[attack_row][attack_col];
+                if (is_white_piece(target_piece) != is_white) {
+                    capture_score += evaluate_captures(target_piece);
+                }
+            }
+        }
+    } else if (tolower(piece) == 'n') {
+        // Knights' unique move offsets
+        int knight_offsets[8][2] = {{-2, -1}, {-1, -2}, {1, -2}, {2, -1},
+                                    {2, 1}, {1, 2}, {-1, 2}, {-2, 1}};
+        for (int k = 0; k < 8; k++) {
+            int attack_row = row + knight_offsets[k][0];
+            int attack_col = col + knight_offsets[k][1];
+            if (is_within_bounds(attack_row, attack_col) && board[attack_row][attack_col] != '.') {
+                char target_piece = board[attack_row][attack_col];
+                if (is_white_piece(target_piece) != is_white) {
+                    capture_score += evaluate_captures(target_piece);
+                }
+            }
+        }
+    } else if (tolower(piece) == 'b' || tolower(piece) == 'r' || tolower(piece) == 'q') {
+        // Sliding pieces (bishops, rooks, queens)
+        int directions[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Rook directions
+                                {-1, -1}, {1, 1}, {1, -1}, {-1, 1}}; // Bishop directions
+        int limit = (tolower(piece) == 'r') ? 4 : (tolower(piece) == 'b') ? 4 : 8;
+
+        for (int d = 0; d < limit; d++) {
+            int attack_row = row + directions[d][0];
+            int attack_col = col + directions[d][1];
+            while (is_within_bounds(attack_row, attack_col)) {
+                char target_piece = board[attack_row][attack_col];
+                if (target_piece != '.') {
+                    if (is_white_piece(target_piece) != is_white) {
+                        capture_score += evaluate_captures(target_piece);
+                    }
+                    break;  // Stop sliding when hitting a piece
+                }
+                attack_row += directions[d][0];
+                attack_col += directions[d][1];
+            }
+        }
+    } else if (tolower(piece) == 'k') {
+        // Kings capture adjacent squares
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) continue;
+                int attack_row = row + dr;
+                int attack_col = col + dc;
+                if (is_within_bounds(attack_row, attack_col) && board[attack_row][attack_col] != '.') {
+                    char target_piece = board[attack_row][attack_col];
+                    if (is_white_piece(target_piece) != is_white) {
+                        capture_score += evaluate_captures(target_piece);
+                    }
+                }
+            }
+        }
+    }
+    return capture_score;
+}
+
+int evaluate_board(char board[8][8], int current_move_count) {
+    int total_score = 0;
+
     // Track development and center control
     int white_developed_pieces = 0;
     int black_developed_pieces = 0;
     int white_center_pawns = 0;
     int black_center_pawns = 0;
-    int white_queen_moved = 0;
-    int black_queen_moved = 0;
-    
+
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             char piece = board[i][j];
-            if (piece == '.') continue;
-            
+            if (piece == '.') continue;  // Skip empty squares
+
             int piece_value = 0;
-            int position_value = 0;
-            int row = is_white_piece(piece) ? i : 7-i;
-            
-            switch(tolower(piece)) {
-                case 'p':
-                    piece_value = PAWN_VALUE;
-                    position_value = pawn_table[row][j];
-                    
-                    if (current_move_count < 20) {
-                        if (j == 3 || j == 4) {  // d or e pawn
-                            if (is_white_piece(piece)) {
-                                white_center_pawns++;
-                                position_value += 500;  // Much stronger center bonus
-                            } else {
-                                black_center_pawns++;
-                                position_value += 500;
-                            }
-                        }
-                        // Stronger penalty for wing pawns
-                        if ((j <= 1 || j >= 6) && 
-                            ((is_white_piece(piece) && i != 6) || 
-                             (!is_white_piece(piece) && i != 1))) {
-                            position_value -= 400;
-                        }
-                    }
-                    break;
-                    
-                case 'n':
-                    piece_value = KNIGHT_VALUE;
-                    position_value = knight_table[row][j];
-                    
-                    if (current_move_count < 20) {
-                        if (is_white_piece(piece)) {
-                            if (i != 7) {  // Knight has moved
-                                white_developed_pieces++;
-                                if ((j >= 2 && j <= 5) && (i >= 2 && i <= 5)) {
-                                    position_value += 300;  // Better center control
-                                }
-                                // Huge bonus for f3/c3
-                                if ((i == 5 && (j == 2 || j == 5))) {
-                                    position_value += 1000;
-                                }
-                            } else {
-                                position_value -= 400;  // Stronger back rank penalty
-                                if (j == 6) position_value -= 1000;  // Blocking castle
-                            }
-                        } else {
-                            if (i != 0) {  // Knight has moved from back rank
-                                black_developed_pieces++;
-                                if ((j >= 2 && j <= 5) && (i >= 2 && i <= 5)) {
-                                    position_value += 30;
-                                }
-                                // HUGE bonus for moving kingside knight
-                                if (j == 6) {
-                                    position_value += 200;
-                                }
-                            } else {
-                                position_value -= 40;
-                                // Extra penalty for blocking castle
-                                if (j == 6) position_value -= 200;
-                            }
-                        }
-                    }
-                    break;
+            int position_value = evaluate_position(piece, i, j, current_move_count, board);
 
-                case 'b':
-                    piece_value = BISHOP_VALUE;
-                    position_value = bishop_table[row][j];
-                    
-                    // Development tracking for bishops
-                    if (current_move_count < 20) {
-                        if (is_white_piece(piece)) {
-                            if (i != 7) {  // Bishop has moved from back rank
-                                white_developed_pieces++;
-                                // Extra bonus for controlling center squares
-                                if ((j >= 2 && j <= 5) && (i >= 2 && i <= 5)) {
-                                    position_value += 30;
-                                }
-                                // HUGE bonus for moving kingside bishop
-                                if (j == 5) {
-                                    position_value += 200;
-                                }
-                            } else {
-                                position_value -= 40;  // Penalty for staying on back rank
-                                // Extra penalty for blocking castle
-                                if (j == 5) position_value -= 200;
-                            }
-                        } else {
-                            if (i != 0) {  // Bishop has moved from back rank
-                                black_developed_pieces++;
-                                if ((j >= 2 && j <= 5) && (i >= 2 && i <= 5)) {
-                                    position_value += 30;
-                                }
-                                // HUGE bonus for moving kingside bishop
-                                if (j == 5) {
-                                    position_value += 200;
-                                }
-                            } else {
-                                position_value -= 40;
-                                // Extra penalty for blocking castle
-                                if (j == 5) position_value -= 200;
-                            }
-                        }
-                    }
-                    break;
-                    
-                case 'r':
-                    piece_value = ROOK_VALUE;
-                    position_value = rook_table[row][j];
-                    
-                    // Encourage rook activation
-                    if (current_move_count > 10) {  // After opening
-                        if (is_open_file(board, j)) {
-                            position_value += 30;  // Increased bonus
-                        }
-                        if ((is_white_piece(piece) && i == 1) || 
-                            (!is_white_piece(piece) && i == 6)) {
-                            position_value += 25;  // Bonus for 7th rank
-                        }
-                    }
-                    break;
-                    
-                case 'q':
-                    piece_value = QUEEN_VALUE;
-                    position_value = queen_table[row][j];
-                    
-                    if (current_move_count < 15) {
-                        if (is_white_piece(piece)) {
-                            if (i != 7 || j != 3) {  // Queen moved
-                                position_value -= 1000;  // Much stronger penalty
-                                if (white_developed_pieces < 2) {
-                                    position_value -= 2000;  // Extra penalty if undeveloped
-                                }
-                            }
-                        } else {
-                            if (i != 0 || j != 3) {
-                                position_value += -80;
-                                if (black_developed_pieces < 2) {
-                                    position_value += -80;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                    
-                case 'k':
-                    piece_value = KING_VALUE;
-
-                    if (!is_endgame(board)) {
-                        if (is_white_piece(piece)) {
-                            position_value = king_table_middlegame[i][j];
-                        } else {
-                            position_value = king_table_middlegame[7-i][j];
-                        }
-                        
-                        int start_rank = is_white_piece(piece) ? 7 : 0;
-                        int start_file = 4;
-                        
-                        // Check for successful castling first
-                        if (current_move_count < 30) {  // Early/mid game castling check
-                            if (is_white_piece(piece)) {
-                                if (i == 7 && (j == 6 || j == 2)) {  // Castled
-                                    position_value += 10000;  // Huge castle bonus
-                                } else if (i == 7 && j == 4 && current_move_count > 8) {
-                                    position_value -= 2000;  // Stronger penalty for not castling
-                                }
-                            } else {
-                                if (i == 0 && (j == 6 || j == 2)) {  // Kingside or Queenside castle
-                                    position_value += 5000;  // HUGE bonus for castling
-                                } else if (i == 0 && j == 4 && current_move_count > 8) {
-                                    position_value -= 1000;  // Penalty for not castling when possible
-                                }
-                            }
-                        }
-
-                        // Your existing penalties for unsafe king moves
-                        if (i != start_rank || j != start_file) {
-                            // Only print for move counts 0-10, and only once per count
-                            static int last_printed_move = -1;
-                            if (current_move_count <= 10 && current_move_count != last_printed_move) {
-                                last_printed_move = current_move_count;
-                            }
-                            
-                            position_value -= 5000;  // Base penalty
-                            if (j >= 2 && j <= 5) {
-                                position_value -= 2000;
-                            }
-                            if (i >= 2 && i <= 5) {
-                                position_value -= 2000;
-                            }
-                            if (current_move_count < 20) {
-                                position_value -= 5000;
-                            }
-                        }
-                    }
-                    break;
+            // Assign piece value based on type
+            switch (tolower(piece)) {
+                case 'p': piece_value = PAWN_VALUE; break;
+                case 'n': piece_value = KNIGHT_VALUE; break;
+                case 'b': piece_value = BISHOP_VALUE; break;
+                case 'r': piece_value = ROOK_VALUE; break;
+                case 'q': piece_value = QUEEN_VALUE; break;
+                case 'k': piece_value = KING_VALUE; break;
             }
-            
+
+            // Update total score based on piece color
             if (is_white_piece(piece)) {
                 total_score += piece_value + position_value;
+                if (i < 7) white_developed_pieces++;  // Track development
+                if (j >= 3 && j <= 4) white_center_pawns++;  // Track center pawns
+
+                // // Evaluate captures for white
+                total_score += evaluate_piece_captures(board, i, j, piece, 1);
             } else {
                 total_score -= piece_value + position_value;
+                if (i > 0) black_developed_pieces++;
+                if (j >= 3 && j <= 4) black_center_pawns++;
+
+                // // Evaluate captures for black
+                total_score -= evaluate_piece_captures(board, i, j, piece, 0);
             }
         }
     }
-    
-    // Increase development bonuses in opening
-    if (current_move_count < 10) {
-        total_score += (white_developed_pieces - black_developed_pieces) * 40;  // Increased from 30
-        total_score += (white_center_pawns - black_center_pawns) * 50;  // Increased from 40
-        
-        if (white_queen_moved) total_score -= 60;  // Increased from 40
-        if (black_queen_moved) total_score += 60;
-    }
-    
+
+    // // Adjust total score based on development and center control
+    total_score += (white_developed_pieces - black_developed_pieces) * 5; // Increased multiplier
+    total_score += (white_center_pawns - black_center_pawns) * 5; // Increased multiplier
+
     // Add king safety evaluation for both sides
     total_score += evaluate_king_safety(board, 1);  // White
     total_score += evaluate_king_safety(board, 0);  // Black
-    
-    // Opening principles (first 10 moves)
-    int opening_bonus = 0;
-    if (current_move_count < 20) {  // Both players' first 10 moves
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                char piece = board[i][j];
-                if (piece == '.') continue;
-                
-                // Center control bonus for pawns and knights
-                if ((j == 3 || j == 4) && (i == 3 || i == 4)) {
-                    if (tolower(piece) == 'p' || tolower(piece) == 'n') {
-                        opening_bonus += is_white_piece(piece) ? 30 : -30;
-                    }
-                }
-                
-                // Development bonus for minor pieces
-                if (tolower(piece) == 'n' || tolower(piece) == 'b') {
-                    int start_rank = is_white_piece(piece) ? 7 : 0;
-                    if (i != start_rank) {
-                        opening_bonus += is_white_piece(piece) ? 20 : -20;
-                    }
-                }
-                
-                // Penalize early queen moves
-                if (tolower(piece) == 'q') {
-                    int start_rank = is_white_piece(piece) ? 7 : 0;
-                    if (i != start_rank) {
-                        opening_bonus += is_white_piece(piece) ? -40 : 40;
-                    }
-                }
-                
-                // Castle bonus
-                if (tolower(piece) == 'k') {
-                    if (is_white_piece(piece) && i == 7 && (j == 1 || j == 6)) {
-                        opening_bonus += 50;
-                    }
-                    if (!is_white_piece(piece) && i == 0 && (j == 1 || j == 6)) {
-                        opening_bonus -= 50;
-                    }
-                }
-            }
-        }
-        total_score += opening_bonus;
-    }
-    
-    // Add specific endgame scoring
-    if (is_endgame(board)) {
-        // Encourage pushing enemy king to the edge
-        int enemy_king_row, enemy_king_col;
-        find_king(board, &enemy_king_row, &enemy_king_col, !is_white_piece(board[0][0]));
-        
-        // Distance from center penalty (force king to edge)
-        int center_dist = abs(3.5 - enemy_king_row) + abs(3.5 - enemy_king_col);
-        total_score += is_white_piece(board[0][0]) ? (center_dist * 10) : -(center_dist * 10);
-        
-        // Distance between kings bonus (keep kings apart)
-        int friendly_king_row, friendly_king_col;
-        find_king(board, &friendly_king_row, &friendly_king_col, is_white_piece(board[0][0]));
-        int king_distance = abs(friendly_king_row - enemy_king_row) + 
-                           abs(friendly_king_col - enemy_king_col);
-        total_score += is_white_piece(board[0][0]) ? (king_distance * 5) : -(king_distance * 5);
-        
-        // Heavy penalty for stalemate positions
-        if (!has_legal_moves(board, !is_white_piece(board[0][0])) && !is_in_check(board, !is_white_piece(board[0][0]))) {
-            total_score += is_white_piece(board[0][0]) ? -1000 : 1000;  // Heavily penalize stalemate
-        }
 
-        // Add heavy penalty for positions that could lead to stalemate
-        if (is_near_stalemate(board, is_white_piece(board[0][0]))) {
-            total_score += is_white_piece(board[0][0]) ? -800 : 800;  // Slightly less than actual stalemate
-        }
-    }
-    
-    return is_white_piece(board[0][0]) ? total_score : -total_score;
+    return total_score;
 }
