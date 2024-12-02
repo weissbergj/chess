@@ -10,6 +10,7 @@
         "move_validation.h": "c",
         "move_scoring.h": "c",
         "minimax.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "network_driver.h": "c"
     }
 }

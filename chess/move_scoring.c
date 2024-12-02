@@ -8,6 +8,7 @@
 #include "move_sort.h"
 #include "utils.h"
 #include "timer.h"
+#include "printf.h"
 
 int evaluate_piece_captures(char board[8][8], int row, int col, char piece, int is_white);
 
@@ -302,7 +303,7 @@ int evaluate_position(char piece, int row, int col, int current_move_count, char
                 // Check if the opponent's piece can directly attack the square
                 if (can_attack(target_piece, r, c, row, col, board)) {
                     int attacker_value = evaluate_captures(target_piece); // Value of attacker
-                    capture_penalty -= 500; // Scaled penalty
+                    capture_penalty -= 0; // Scaled penalty
                 }
             }
         }
@@ -446,7 +447,7 @@ int evaluate_board(char board[8][8], int current_move_count) {
                 if (j >= 3 && j <= 4) white_center_pawns++;  // Track center pawns
 
                 // // Evaluate captures for white
-                total_score += evaluate_piece_captures(board, i, j, piece, 1);
+                total_score += evaluate_piece_captures(board, i, j, piece, 1);              // DUPLICATE DUPLICATE
             } else {
                 total_score -= piece_value + position_value;
                 if (i > 0) black_developed_pieces++;

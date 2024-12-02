@@ -1,0 +1,7 @@
+/dev/tty.usbserial-0001   # Correct serial device
+115200                   # Baud rate
+noauth                   # Disable authentication
+local                    # Ignore modem control lines
+persist                  # Keep connection alive
+debug                    # Enable verbose logging
+
