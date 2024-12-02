@@ -1,1 +1,0 @@
-Please run the extension by going to the paint directory. Run make run and hold the left cursor down to draw red.
