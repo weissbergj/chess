@@ -1,0 +1,69 @@
+This is a concise overview of how the program runs. See headers.txt for precise headers.
+
+main
+│
+├── find_best_move (AI's turn)
+│   │
+│   ├── For AI's pieces:
+│   │   ├── generate_moves (calls piece-specific generators)
+│   │       ├── generate_pawn_moves
+│   │       ├── generate_knight_moves
+│   │       ├── generate_bishop_moves
+│   │       ├── generate_rook_moves
+│   │       ├── generate_queen_moves
+│   │       └── generate_king_moves
+│   │
+│   ├── For each generated move:
+│   │   ├── move_sort (assigns a preliminary score)
+│   │       ├── evaluate_castling (if applicable)
+│   │       ├── evaluate_captures (if applicable)
+│   │   │
+│   │   ├── make_move (simulate move on a copy)
+│   │   └── minimax (evaluate move recursively)
+│   │       │
+│   │       ├── If depth == 0 or game over:
+│   │       │   └── evaluate_board
+│   │       │       ├── Initialize total_score
+│   │       │       ├── Loop through board squares:
+│   │       │       │   ├── For each piece:
+│   │       │       │   │   ├── evaluate_position
+│   │       │       │   │   │   ├── Switch based on piece type:
+│   │       │       │   │   │   │   ├── evaluate_pawn
+│   │       │       │   │   │   │   ├── evaluate_knight
+│   │       │       │   │   │   │   ├── evaluate_bishop
+│   │       │       │   │   │   │   ├── evaluate_rook
+│   │       │       │   │   │   │   ├── evaluate_queen
+│   │       │       │   │   │   │   └── evaluate_king
+│   │       │       │   │   │   └── Return position_value
+│   │       │       │   │   ├── Update total_score
+│   │       │       │   └── Continue looping through board
+│   │       │       ├── Apply additional evaluations:
+│   │       │       │   ├── evaluate_king_safety
+│   │       │       │   └── Other strategic considerations
+│   │       │       └── Return total_score
+│   │       │
+│   │       └── If depth > 0:
+│   │           ├── For opponent's pieces:
+│   │           │   ├── generate_moves (calls piece-specific generators)
+│   │           ├── For each opponent's move:
+│   │           │   ├── move_sort (assigns a preliminary score)
+│   │           │   ├── make_move (simulate opponent's move)
+│   │           │   └── minimax (recursive call)
+│   │           └── Alpha-beta pruning
+│   │
+│   └── Select move with best score
+│
+├── make_move (execute AI's move)
+│   ├── Update board state
+│   ├── Handle special moves (castling, en passant, promotion)
+│   ├── Update game state variables (move_count, move_history)
+│   └── Check for draw conditions (e.g., fifty-move rule, repetition)
+│
+└── Proceed to player's turn
+
+Key Function Interactions:
+*find_best_move: Calls minimax to evaluate potential moves and selects the best one.
+*minimax: Recursively evaluates moves using evaluate_board at terminal nodes and applies alpha-beta pruning to optimize the search.
+*evaluate_board: Uses evaluate_position for each piece, which in turn calls the specific evaluation functions for each piece type.
+*move_sort: Helps prioritize moves during move generation by assigning scores based on captures and castling opportunities.
+*make_move: Updates the board state and game variables, handling all types of moves, including special ones.

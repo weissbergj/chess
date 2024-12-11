@@ -1,0 +1,272 @@
+1. Although it is an older assignment, I am proud of the assign2 clock.c module. 
+The current version with the extension is less beautiful, but the initial version was 
+incredibly concise. It is the first assing2 tag and did not display the flashing “done.” 
+I excluded it for brevity and because it is easy to display. The initial version was well 
+under 100 lines (maybe 50?). Unfortunately, the extension is now 247 LOC. It was not code golf, 
+but there is something to writing concisely (Romeo and Juliet Act 3, Scene 2, lines 23-27; the 
+aesthetic quality of utilitarian language rather than each being at odds with one another). I 
+am also proud of these functions from assign6 gl.c since they ran so efficiently without floating 
+point operations! These required an adaptation of DDA and other algorithms. The assignment had no 
+bugs. It passed all staff tests on the first attempt.
+
+void gl_draw_line(int x1, int y1, int x2, int y2, color_t color) {
+   if ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0) ||
+       (x1 >= gl_get_width() && x2 >=gl_get_width()) ||
+       (y1 >= gl_get_height() && y2 >= gl_get_height())) return;
+   float dx = x2 - x1, dy = y2 - y1, length = my_sqrtf(dx * dx + dy * dy);
+   if (length < 1) {
+       if (x1 >= 0 && x1 < gl_get_width() && y1 >= 0 && y1 < gl_get_height()) {
+           gl_draw_pixel(x1, y1, color);
+       }
+       return;
+   }
+   dx /= length; dy /= length;
+   float x = x1, y = y1;
+   for (float i = 0; i <= length; i++) {
+       int ix = (int)x, iy = (int)y;
+       float fx = x - ix, fy = y - iy;
+       if (ix >= 0 && ix <gl_get_width() && iy >= 0 && iy < gl_get_height()) {
+           color_t current = gl_read_pixel(ix, iy);
+           gl_draw_pixel(ix, iy, blend_colors(color, current, (1-fx)*(1-fy)));
+           if (ix + 1 < gl_get_width()) {
+               current = gl_read_pixel(ix+1, iy);
+               gl_draw_pixel(ix+1, iy, blend_colors(color,current, fx*(1-fy)));
+           }
+           if (iy + 1 < gl_get_height()) {
+               current = gl_read_pixel(ix, iy+1);
+               gl_draw_pixel(ix, iy+1, blend_colors(color, current, (1-fx)*fy));
+           }
+       }
+       x += dx; y += dy;
+   }
+}
+
+
+void gl_draw_triangle(int x1, int y1, int x2, int y2, int x3, int y3, color_t color) {
+   gl_draw_line(x1, y1, x2, y2, color);
+   gl_draw_line(x2, y2, x3, y3, color);
+   gl_draw_line(x3, y3, x1, y1, color);
+   int minY = MIN(y1, MIN(y2, y3)), maxY = MAX(y1, MAX(y2, y3));
+   for (int y = minY; y <= maxY; y++) {
+       float x_intersect1 = -1,x_intersect2 = -1;
+       if (y1 != y2 && y >= MIN(y1,y2) && y <= MAX(y1,y2)) {
+           x_intersect1 = x1 + (x2-x1) * (y-y1) / (float)(y2-y1);
+       }
+       if (y2 != y3 && y >= MIN(y2,y3) && y <= MAX(y2,y3)) {
+           float x = x2 + (x3-x2) * (y-y2) /(float)(y3-y2);
+           if (x_intersect1 < 0) x_intersect1 = x; else x_intersect2 = x;
+       }
+       if (y3 != y1 && y >= MIN(y3,y1) && y <= MAX(y3,y1)) {
+           float x = x3 + (x1-x3) * (y-y3) / (float)(y1-y3);
+           if (x_intersect1 < 0) x_intersect1 = x; else x_intersect2 = x;
+       }
+       if (x_intersect1 >= 0 && x_intersect2 >= 0) {
+           int start = MIN((int)x_intersect1, (int)x_intersect2), end =MAX((int)x_intersect1, (int)x_intersect2);
+           for (int x = start; x <= end; x++) {
+               gl_draw_pixel(x, y, color);
+           }
+       }
+   }
+}
+
+
+
+2. I would rewrite the assign5 shell.c module, specifically command handling and input processing 
+sections (shell_readline from lines 318 to 414). The current implementation handles input reading, 
+command completion, and history navigation in a single function. This is difficult to maintain and 
+extend. I also mix both input reading and command processing, violating the single responsibility 
+principle. I would break down shell_readline into more focused functions: (1) reading input, (2) handling 
+special key events, (3) command completion, (4) managing command history, etc. I would also implement a 
+state machine for clearer transitions between the three functions of the program. Furthermore, the current 
+implementation has minimal error handling and uses fixed-size buffers. I should, at a minimum, incorporate 
+error handline and then potentially dynamic memory allocation.
+
+Advantages included maintainability of smaller, well-defined functions that are easier to read and test, 
+extensibility by separating functions and adding new features, performance by optimizing memory management, 
+and error management. 
+
+Here is a conceptual example of how the code might look:
+// src/mycode/assign5/shell.c
+
+
+typedef struct {
+    char input_buffer[MAX_LINE_LENGTH];
+    size_t cursor_position;
+    size_t input_length;
+    int history_index;
+} InputState;
+
+
+void shell_readline(char buf[], size_t bufsize) {
+    InputState input_state = initialize_input_state();
+
+
+    while (1) {
+        char ch = shell_state.read_input();
+
+
+        if (process_input_character(ch, &input_state, buf)) {
+            return; // Input finalized
+        }
+    }
+}
+
+
+static InputState initialize_input_state() {
+    InputState state;
+    state.cursor_position = 0;
+    state.input_length = 0;
+    state.history_index = 0;
+    memset(state.input_buffer, 0, MAX_LINE_LENGTH);
+    return state;
+}
+
+
+static bool process_input_character(char ch, InputState *state, char buf[]) {
+    if (handle_special_keys(ch, state)) {
+        return false; // Continue reading input
+    }
+
+
+    if (is_end_of_input(ch)) {
+        finalize_input(state, buf);
+        return true; // Input finalized
+    }
+
+
+    if (ch == '\b') {
+        delete_char(state);
+        return false; // Continue reading input
+    }
+
+
+    if (is_valid_character(ch)) {
+        insert_char(ch, state);
+    }
+
+
+    return false; // Continue reading input
+}
+
+
+static bool handle_special_keys(char ch, InputState *state) {
+    switch (ch) {
+        case PS2_KEY_ARROW_LEFT:
+            move_cursor_left(state);
+            return true;
+        case PS2_KEY_ARROW_RIGHT:
+            move_cursor_right(state);
+            return true;
+        case PS2_KEY_ARROW_UP:
+            navigate_history_up(state);
+            return true;
+        case PS2_KEY_ARROW_DOWN:
+            navigate_history_down(state);
+            return true;
+        case '\t':
+            complete_command(state);
+            return true;
+        default:
+            return false; // Not a special key
+    }
+}
+
+
+static bool is_end_of_input(char ch) {
+    return ch == '\n' || ch == '\r';
+}
+
+
+static void finalize_input(InputState *state, char buf[]) {
+    shell_state.shell_printf("\n");
+    state->input_buffer[state->input_length] = '\0';
+    memcpy(buf, state->input_buffer, state->input_length + 1);
+    if (state->input_length > 0) {
+        add_to_history(buf);
+    }
+}
+
+
+static bool is_valid_character(char ch) {
+    return ch >= ' ' && ch < 0x7f && shell_state.input_length < MAX_LINE_LENGTH - 1;
+}
+
+
+static void move_cursor_left(InputState *state) {
+    if (state->cursor_position > 0) {
+        state->cursor_position--;
+        shell_state.shell_printf("\b");
+    } else {
+        shell_bell();
+    }
+}
+
+
+static void move_cursor_right(InputState *state) {
+    if (state->cursor_position < state->input_length) {
+        state->cursor_position++;
+        shell_state.shell_printf("\x1b[C");
+    } else {
+        shell_bell();
+    }
+}
+
+
+static void navigate_history_up(InputState *state) {
+    if (state->history_index < shell_state.history_size) {
+        state->history_index++;
+        show_history_entry(state->history_index - 1);
+    } else {
+        shell_bell();
+    }
+}
+
+
+static void navigate_history_down(InputState *state) {
+    if (state->history_index > 0) {
+        state->history_index--;
+        if (state->history_index == 0) {
+            clear_line();
+        } else {
+            show_history_entry(state->history_index - 1);
+        }
+    } else {
+        shell_bell();
+    }
+}
+
+
+3. See the letter below.
+
+Dear Prospective 107e Students,
+
+This is a general letter about computer science at Stanford, 107e versus 107, style, and life choices. 
+I hope it helps you on your programming journey.
+
+If you are familiar with 107’s content—program execution, C programming, data representation, memory 
+management, and performance optimization—107 requires less minimal effort. 107 is declarative, while 
+107e is procedural. Neither are theoretical. Generally, it is more interesting to learn how to work in 
+bare metal environments. Neither is more time-consuming nor easier with average effort, but both can be 
+done with minimal or maximal effort.
+
+If you are worried about not having done 106b or even written code in the past, you will be fine as long 
+as you have been exposed to a rigorous treatment of any logical subject (e.g., math, physics, chemistry). 
+Take 107e over 161 (Google algorithms when needed), 103 (high school math), and 109 (high school statistics).
+
+Per style, code is logic. Write code as you think about problems. Worry about writing beautiful code 
+rather than about style, although you may not care enough to take the time for that in all assignments—I 
+cared especially for a select few—so just make it efficient. See Knuth's The Art of Computer Programming. 
+There are some principles in advanced algorithm design (particularly games) and when working with lengthy, 
+complex code bases, but those are not relevant.
+
+My ultimate advice is thus: treat programming (not “computer science”) as an art and intellectual 
+interest rather than a ticket to a software engineering position; focus on courses that treat 
+programming as such; this is one of the few core classes that attempts to do so. Approach all of 
+Stanford with this mindset.
+
+Best,
+
+A Former 107e Student
+
+P.S. As additional advice, consider CS 242, CS 336, Math 230, Stats 300 (although niche), and other 
+paper-reading classes over 229, 231N, 224N, etc. Prerequisites are not needed.
