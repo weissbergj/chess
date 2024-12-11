@@ -8,7 +8,6 @@
 #include "printf.h"
 #include "rotaryencoder.h"
 
-
 #define TOTAL_PULSES 20
 
 void servo_init (servo_motor servo) {
@@ -36,6 +35,3 @@ void rotate(float angle, servo_motor servo, rotator* encoder) {
     timer_delay_us(PERIOD - direction);
   }
 }
-
-
-

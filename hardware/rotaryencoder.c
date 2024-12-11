@@ -10,7 +10,6 @@
 
 void activate_pullup(gpio_id_t id);
 
-
 rotator* rotary_init(gpio_id_t rotate_a, gpio_id_t rotate_b) {
   rotator *r_encoder = malloc(sizeof(*r_encoder));
   r_encoder->rotate_a = rotate_a;

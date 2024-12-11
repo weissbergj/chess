@@ -9,7 +9,6 @@
 #include "interrupts.h"
 #include "rotaryencoder.h"
 
-
 void main(void) {
     interrupts_init();
     uart_init();
