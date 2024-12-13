@@ -3,7 +3,7 @@
 typedef struct rotator {
   gpio_id_t rotate_a;
   gpio_id_t rotate_b;
-  int pulses;
+  volatile int pulses;
 } rotator;
 
 

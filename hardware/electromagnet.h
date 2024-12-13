@@ -7,4 +7,4 @@ enum { OFF = 0, ON };
 
 void electromagnet_init(gpio_id_t pin);
 
-void set_magnet(const int setting);
+void set_electromagnet(const int setting);

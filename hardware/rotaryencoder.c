@@ -29,9 +29,9 @@ void handler(void *aux_data) {
   gpio_interrupt_clear(r_encoder->rotate_a);
 
   if (rotate_b_state) {
-    r_encoder->pulses++;
-  } else {
     r_encoder->pulses--;
+  } else {
+    r_encoder->pulses++; // SOMETIMES BREAKS... NEED TO FIX ??? MAYBE FLIP SIGNS HERE AND ABOVE
   }
 
   printf("Pulses: %d\n", r_encoder->pulses);

@@ -13,6 +13,6 @@ void electromagnet_init(gpio_id_t pin) {
   return;
 }
 
-void set_magnet(const int setting) {
+void set_electromagnet(const int setting) {
   gpio_write(ELECTROMAGNET_PIN, setting);
 }
