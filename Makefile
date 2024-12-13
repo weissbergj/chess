@@ -2,7 +2,7 @@
 
 PROGRAM = main.bin
 # SOURCES = $(PROGRAM:.bin=.c)
-SOURCES = main.c board.c move_generation.c move_validation.c game_logic.c utils.c game_state.c minimax.c move_scoring.c move_sort.c electromagnet.c
+SOURCES = main.c board.c move_generation.c move_validation.c game_logic.c utils.c game_state.c minimax.c move_scoring.c move_sort.c
 
 all: $(PROGRAM)
 

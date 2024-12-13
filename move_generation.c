@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "uart.h"
 #include "strings.h"
-#include "electromagnet.h"
+// #include "electromagnet.h"
 
 void generate_knight_moves(char board[8][8], int row, int col, int moves[][4], int *move_count) {
     static const int knight_moves[8][2] = {
