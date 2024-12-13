@@ -50,9 +50,9 @@ what you learned along the way? Tell us about it!
 
 ## Photos
 
-[![Demo Video](demo-thumbnail.jpeg)](https://youtu.be/SC8W8NMmxuk)
+[![Demo Video](demo.jpeg)](https://youtu.be/SC8W8NMmxuk)
 
-See [demo.MOV][demo.MOV] and [demo.jpeg](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
+See [demo.MOV](demo.MOV) and [demo.jpeg](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
 
 ## Program Logic
 This is the core logic for the chess engine. It is taken verbatim from overview.txt.
