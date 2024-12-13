@@ -52,7 +52,7 @@ what you learned along the way? Tell us about it!
 
 [![Demo Video](demo.jpeg)](https://youtu.be/SC8W8NMmxuk)
 
-See [demo.MOV](demo.MOV) and [demo.jpeg](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
+See the [demo video](https://youtu.be/SC8W8NMmxuk) on YouTube, [demo.MOV](demo.MOV), and [demo.jpeg](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
 
 ## Program Logic
 This is the core logic for the chess engine. It is taken verbatim from overview.txt.
