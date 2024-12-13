@@ -50,12 +50,9 @@ what you learned along the way? Tell us about it!
 
 ## Photos
 
-<video width="640" height="480" controls>
-  <source src="demo.MOV" type="video/quicktime">
-  Your browser does not support the video tag.
-</video>
+[![Demo Video](demo-thumbnail.jpeg)](https://youtu.be/SC8W8NMmxuk)
 
-![Demo Image](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
+See [demo.MOV][demo.MOV] and [demo.jpeg](demo.jpeg) for an example of the arm. See [example_game.txt](example_game.txt) for a sample game and commentary.
 
 ## Program Logic
 This is the core logic for the chess engine. It is taken verbatim from overview.txt.
