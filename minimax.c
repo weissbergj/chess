@@ -209,9 +209,9 @@ void find_best_move(char board[8][8], int best_move[4], int is_white) {
         int score = minimax(temp_board, depth - 1, -10000, 10000, !is_white, unique_move_count);
         
         // Log the score of the move being evaluated
-        printf("Move (%d, %d -> %d, %d) scored: %d\n", 
-               scored_moves[i].move[0], scored_moves[i].move[1], 
-               scored_moves[i].move[2], scored_moves[i].move[3], score);
+        // printf("Move (%d, %d -> %d, %d) scored: %d\n", 
+        //        scored_moves[i].move[0], scored_moves[i].move[1], 
+        //        scored_moves[i].move[2], scored_moves[i].move[3], score);
 
         if ((is_white && score > best_score) || (!is_white && score < best_score)) {
             best_score = score;
@@ -228,6 +228,6 @@ void find_best_move(char board[8][8], int best_move[4], int is_white) {
     }
 
     // Log the best move selected
-    printf("Best move from find_best_move: %d %d %d %d with score: %d\n", 
-           best_move[0], best_move[1], best_move[2], best_move[3], best_score);
+    // printf("Best move from find_best_move: %d %d %d %d with score: %d\n", 
+    //        best_move[0], best_move[1], best_move[2], best_move[3], best_score);
 }

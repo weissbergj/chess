@@ -1,0 +1,411 @@
+Black is programmed to perform slightly worse. White wins with an estimated Elo of 1200-1300 (reckless moves on the flank and early random knight hops) versus black's Elo of 800-900.
+This makes white a decent intermediate player.
+
+The analysis of the game below is the following: white delivers a mating attack with tactical vision but some atypical play. Black has several weakening moves but no coherent plan.
+White’s early knight maneuvers are unconvential (Nf3, Ng5, Nxe4, and later Nc5) aimed to unsettle Black’s center. Black attempts to counter with symmetrical knight moves and eventually pushes into 
+the center. However the knight commits sucide lol. Black tries to control center with Qf4 and G4, but these favor White's better coordination of the minor pieces. White systematically 
+improves piece placement: Be5 and infiltration onto the c7 square. Black’s pawn pushes on the queenside and kingside (b5, g5) weaken critical squares and allow White’s knights to dominate. 
+When White’s bishop and knights are in Black’s territory, Black makes awkward defensive moves. Black’s counterplay with the queen and rook is insufficient. The final mating net is swift, 
+illusrating the effectiveness of White’s aggressive knight play and piece deployment. White's atypical approach and energetic piece play beats Black's reactive strategy, if you can call it that.
+
+
+ a b c d e f g h
+8 r n b q k b n r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . . . 
+4 . . . . . . . . 
+3 . . . . . . . . 
+2 P P P P P P P P 
+1 R N B Q K B N R 
+Would you like to play against the AI? (yes/no): no
+White played: g1f3
+
+  a b c d e f g h
+8 r n b q k b n r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . . . 
+4 . . . . . . . . 
+3 . . . . . N . . 
+2 P P P P P P P P 
+1 R N B Q K B . R 
+Black played: g8f6
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . n . . 
+5 . . . . . . . . 
+4 . . . . . . . . 
+3 . . . . . N . . 
+2 P P P P P P P P 
+1 R N B Q K B . R 
+White played: f3g5
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . n . . 
+5 . . . . . . N . 
+4 . . . . . . . . 
+3 . . . . . . . . 
+2 P P P P P P P P 
+1 R N B Q K B . R 
+Black played: f6e4
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . N . 
+4 . . . . n . . . 
+3 . . . . . . . . 
+2 P P P P P P P P 
+1 R N B Q K B . R 
+White played: d2d3
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . N . 
+4 . . . . n . . . 
+3 . . . P . . . . 
+2 P P P . P P P P 
+1 R N B Q K B . R 
+Black played: e4c3
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . N . 
+4 . . . . . . . . 
+3 . . n P . . . . 
+2 P P P . P P P P 
+1 R N B Q K B . R 
+White played: b2c3
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p p 
+6 . . . . . . . . 
+5 . . . . . . N . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+Black played: h7h6
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p . 
+6 . . . . . . . p 
+5 . . . . . . N . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+White played: g5e4
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p p p p p . 
+6 . . . . . . . p 
+5 . . . . . . . . 
+4 . . . . N . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+Black played: d7d5
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . . p . . . . 
+4 . . . . N . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+White played: e4c5
+
+  a b c d e f g h
+8 r n b q k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . N p . . . . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+Black played: d8d6
+
+  a b c d e f g h
+8 r n b . k b . r 
+7 p p p . p p p . 
+6 . . . q . . . p 
+5 . . N p . . . . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+White played: c5a4
+
+  a b c d e f g h
+8 r n b . k b . r 
+7 p p p . p p p . 
+6 . . . q . . . p 
+5 . . . p . . . . 
+4 N . . . . . . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+Black played: d6f4
+
+  a b c d e f g h
+8 r n b . k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . . p . . . . 
+4 N . . . . q . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N B Q K B . R 
+White played: c1f4
+
+  a b c d e f g h
+8 r n b . k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . . p . . . . 
+4 N . . . . B . . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: c8g4
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . . p . . . . 
+4 N . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+White played: a4c5
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p p p . p p p . 
+6 . . . . . . . p 
+5 . . N p . . . . 
+4 . . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: b7b6
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p p . 
+6 . p . . . . . p 
+5 . . N p . . . . 
+4 . . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+White played: c5a4
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p p . 
+6 . p . . . . . p 
+5 . . . p . . . . 
+4 N . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: b6b5
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p p . 
+6 . . . . . . . p 
+5 . p . p . . . . 
+4 N . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+White played: a4c5
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p p . 
+6 . . . . . . . p 
+5 . p N p . . . . 
+4 . . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: g7g5
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p . . 
+6 . . . . . . . p 
+5 . p N p . . p . 
+4 . . . . . B b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+White played: f4e5
+
+  a b c d e f g h
+8 r n . . k b . r 
+7 p . p . p p . . 
+6 . . . . . . . p 
+5 . p N p B . p . 
+4 . . . . . . b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: b8d7
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p n p p . . 
+6 . . . . . . . p 
+5 . p N p B . p . 
+4 . . . . . . b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+White played: c5d7
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p p . . 
+6 . . . . . . . p 
+5 . p . p B . p . 
+4 . . . . . . b . 
+3 . . P P . . . . 
+2 P . P . P P P P 
+1 R N . Q K B . R 
+Black played: g4e2
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p p . . 
+6 . . . . . . . p 
+5 . p . p B . p . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . b P P P 
+1 R N . Q K B . R 
+White played: f1e2
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p p . . 
+6 . . . . . . . p 
+5 . p . p B . p . 
+4 . . . . . . . . 
+3 . . P P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+Black played: d5d4
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p p . . 
+6 . . . . . . . p 
+5 . p . . B . p . 
+4 . . . p . . . . 
+3 . . P P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+White played: c3d4
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p p . . 
+6 . . . . . . . p 
+5 . p . . B . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+Black played: f7f6
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . p N p . . . 
+6 . . . . . p . p 
+5 . p . . B . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+White played: e5c7
+
+  a b c d e f g h
+8 r . . . k b . r 
+7 p . B N p . . . 
+6 . . . . . p . p 
+5 . p . . . . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+Black played: a8d8
+
+  a b c d e f g h
+8 . . . r k b . r 
+7 p . B N p . . . 
+6 . . . . . p . p 
+5 . p . . . . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+White played: d7c5
+
+  a b c d e f g h
+8 . . . r k b . r 
+7 p . B . p . . . 
+6 . . . . . p . p 
+5 . p N . . . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+Black played: d8d5
+
+  a b c d e f g h
+8 . . . . k b . r 
+7 p . B . p . . . 
+6 . . . . . p . p 
+5 . p N r . . p . 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . B P P P 
+1 R N . Q K . . R 
+White played: e2h5
+
+  a b c d e f g h
+8 . . . . k b . r 
+7 p . B . p . . . 
+6 . . . . . p . p 
+5 . p N r . . p B 
+4 . . . P . . . . 
+3 . . . P . . . . 
+2 P . P . . P P P 
+1 R N . Q K . . R 
+Checkmate! White wins!
+Final Score:
+White wins: 1
+Black wins: 0
+Draws: 0

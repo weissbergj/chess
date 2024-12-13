@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "rotaryencoder.h": "c",
+        "electromagnet.h": "c",
+        "servo.h": "c"
+    }
+}
