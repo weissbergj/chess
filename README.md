@@ -10,6 +10,8 @@ This is a naive implementation of a chess algorithm, using a minimax scoring fun
 
 Final style submissions are titled [jared-final-style.txt](jared-final-style.txt) and [zara-final-style.txt](zara-final-style.txt).
 
+Run "make run" in terminal in the current directory to play chess. Say "yes" to play the AI yourself. Say "no" to watch the AI play.
+
 Key files:
 * [main.c](main.c)
 * [hardware/myprogram.c](hardware/myprogram.c) 
