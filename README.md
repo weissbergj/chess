@@ -18,6 +18,7 @@ Key files:
 * [headers.txt](headers.txt)
 * [demo.jpeg](demo.jpeg)
 * [demo.MOV](demo.MOV)
+* [YouTube Demo](https://youtu.be/SC8W8NMmxuk)
 
 ## Member contribution
 Jared focused on the chess algorithm. Zara constructed the 2-joint robotic arm and wrote the hardware main program and all header c and h files. Jared and Zara integrated the hardware main program into the chess engine (i.e., rewriting myprogram.c to create a mapping from board positional values to move from initial to source, move to destination, and return to initial position).
