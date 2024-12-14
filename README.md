@@ -29,8 +29,8 @@ These two ideas inspired our project, although we adapted no code from either:
 The main algorithm was designed from scratch. There are examples on sites like Wikipedia of algorithms implemented (e.g., minimax, alpha/beta pruning).
 
 These sites were referenced for the 2-joint arm:
-* 
-* 
+* https://robotacademy.net.au/lesson/inverse-kinematics-for-a-2-joint-robot-arm-using-geometry/
+* (Previous experience with the math behind robotics)
 
 ## Self-evaluation
 We did everything we proposed except for Mango-Pi interaction (we excluded it in favor of simplicity on one device). One thing worth mentioning is instead of networking through the Mango-Pi, we wrote a simple Python script to host the UART output, although this was just extra. It is almost identical to the terminal interface, so we demoed the terminal.
