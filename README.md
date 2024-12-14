@@ -10,6 +10,8 @@ This is a naive implementation of a chess algorithm, using a minimax scoring fun
 
 Final style submissions are titled [jared-final-style.txt](jared-final-style.txt) and [zara-final-style.txt](zara-final-style.txt).
 
+Run "make run" in terminal in the current directory to play chess. Say "yes" to play the AI yourself. Say "no" to watch the AI play.
+
 Key files:
 * [main.c](main.c)
 * [hardware/myprogram.c](hardware/myprogram.c) 
@@ -21,7 +23,7 @@ Key files:
 * [YouTube Demo](https://youtu.be/SC8W8NMmxuk)
 
 ## Member contribution
-Jared focused on the chess algorithm. Zara constructed the 2-joint robotic arm and wrote the hardware main program and all header c and h files. Jared and Zara integrated the hardware main program into the chess engine (i.e., rewriting myprogram.c to create a mapping from board positional values to move from initial to source, move to destination, and return to initial position).
+Jared focused on the chess algorithm. Zara constructed the 2-joint robotic arm and wrote all ./hardware header c and h files. Jared and Zara integrated the hardware main program into the chess engine (i.e., rewriting myprogram.c to create a mapping from board positional values to move from initial to source, move to destination, and return to initial position).
 
 ## References
 These two ideas inspired our project, although we adapted no code from either:
